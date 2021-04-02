@@ -1,6 +1,6 @@
 
 build_local/
-build
+build/
 
 
 # Get latest from https://github.com/github/gitignore/blob/master/VisualStudio.gitignore
