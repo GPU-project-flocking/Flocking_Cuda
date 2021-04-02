@@ -1,0 +1,16 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/blue/cis4936/jacobroberge/share/Flocking_Cuda/kernel.cu
+cuda_runtime.h
+/blue/cis4936/jacobroberge/share/Flocking_Cuda/cuda_runtime.h
+device_launch_parameters.h
+/blue/cis4936/jacobroberge/share/Flocking_Cuda/device_launch_parameters.h
+stdio.h
+-
+
