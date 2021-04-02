@@ -1,1 +1,0 @@
-/apps/compilers/gcc/5.2.0/bin/g++ CMakeFiles/kernel.dir/kernel.cu.o -o kernel  -lcudadevrt -lcudart_static -lrt -lpthread -ldl  -L"/apps/compilers/cuda/10.0.130/targets/x86_64-linux/lib/stubs" -L"/apps/compilers/cuda/10.0.130/targets/x86_64-linux/lib"

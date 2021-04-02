@@ -1,3 +1,0 @@
-/blue/cis4936/jacobroberge/share/Flocking_Cuda/build/CMakeFiles/rebuild_cache.dir
-/blue/cis4936/jacobroberge/share/Flocking_Cuda/build/CMakeFiles/kernel.dir
-/blue/cis4936/jacobroberge/share/Flocking_Cuda/build/CMakeFiles/edit_cache.dir
