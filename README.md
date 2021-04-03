@@ -1,13 +1,14 @@
 # Flocking_Cuda
+
  flocking project using cuda
 
 
 
 ## Sources
 
-* tutorials *
+*tutorials*
 https://github.com/aaronmjacobs/InitGL
 
-* libraries *
+*libraries*
 1. https://github.com/go-gl/glfw
 2. https://github.com/Dav1dde/glad
