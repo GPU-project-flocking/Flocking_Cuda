@@ -1,9 +1,9 @@
 #pragma once
-#include <glad/glad.h>
-#include <GLFW/glfw3.h>
-#include <assimp/BaseImporter.h>
+// #include <glad/glad.h>
+// #include <GLFW/glfw3.h>
+// #include <assimp/BaseImporter.h>
 #include <string>
-#include <glm/glm.hpp>
+#include <glm.hpp>
 
 class Visualization
 {
@@ -14,9 +14,9 @@ class Visualization
 
 
     public:
-
-    //Visualization( );
+    Visualization();
     bool update();
+    void test();
 
 
 
