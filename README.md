@@ -2,6 +2,13 @@
 
  flocking project using cuda
 
+## compiling
+First in the root directory for the project insert these commands on your terminal:
+'git submodule init'
+'git submodule update'
+
+Then in ./build insert this command:
+'cmake ..'
 
 
 ## Sources
