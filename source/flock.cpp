@@ -19,42 +19,45 @@ Flock::~Flock() {
 
 void Flock::calc_average_pos() {
 	int counter = 0;
-	vec2d sum(0, 0);
+	glm::vec2 sum(0, 0);
 	for (Boid* boid : Boids) {
 		sum.operator+=(boid->position);
 		counter++;
 	}
-	this->averagePos = sum / counter;
+	
+	this->averagePos = sum /= counter;
 }
 
 
 void Flock::calc_average_forward() {
 	int counter = 0;
-	vec2d sum(0, 0);
+	glm::vec2 sum(0, 0);
 
 	for (Boid* boid : Boids) {
 		sum.operator+=(boid->velocity);
 		counter++;
 	}
-	averageForward = sum / counter;
+	averageForward = sum /= counter;
 }
 
 
-vec2d Flock::calc_alignment_accel(Boid* boid) {
-	vec2d accel = this->averageForward / boid->maxSpeed;
-
+glm::vec2 Flock::calc_alignment_accel(Boid* boid) {
+	glm::vec2 avgForwardTmp = this->averageForward;
+	glm::vec2 accel = avgForwardTmp /= boid->maxSpeed;
+    
 	if (accel.length() > 1) {
-		accel.normalize();
+		accel = glm::normalize(accel);
 	}
-	return accel.operator*(AlignmentStrength);
+	return accel *  AlignmentStrength;
 }
 
-vec2d Flock::calc_cohesion_accel(Boid* boid) {
-	vec2d accel = averagePos.operator-(boid->position);
+glm::vec2 Flock::calc_cohesion_accel(Boid* boid) {
+	glm::vec2 avgPosTmp = this->averagePos;
+	glm::vec2 accel = avgPosTmp -= boid->position;
 
 	float dist = accel.length();
 
-	accel.normalize();
+	accel = glm::normalize(accel);
 
 	if (dist < flockRadius) {
 		accel = accel * dist / flockRadius;
@@ -63,29 +66,30 @@ vec2d Flock::calc_cohesion_accel(Boid* boid) {
 	return accel * CohesionStrength;
 }
 
-vec2d Flock::calc_separation_accel(Boid* boid) {
-	vec2d sum(0, 0);
+glm::vec2 Flock::calc_separation_accel(Boid* boid) {
+	glm::vec2 sum(0, 0);
 	for (Boid* sibling : Boids) {
 		if (sibling == boid) {
 			continue;
 		}
 
-		vec2d accel = boid->position.operator-(sibling->position);
+		
+		glm::vec2 accel = boid->position - sibling->position;
 		float dist = accel.length();
 		float safeDist = boid->safeRadius + sibling->safeRadius;
 		
 		if (dist < safeDist) {
-			accel.normalize();
+			accel = glm::normalize(accel);
 			accel = accel * (safeDist - dist) / safeDist;
 			sum.operator+=(accel);
 		}
 	}
 	
 	if (sum.length() > 1) {
-		sum.normalize();
+		sum = glm::normalize(sum);
 	}
 
-	return sum.operator*(this->SeparationStrength);
+	return sum * this->SeparationStrength;
 }
 
 void Flock::update() {
@@ -93,21 +97,21 @@ void Flock::update() {
 	calc_average_pos();
 
 	for (Boid* boid : Boids) {
-		vec2d accel = calc_alignment_accel(boid);
+		glm::vec2 accel = calc_alignment_accel(boid);
 
-		vec2d cohesionF = calc_cohesion_accel(boid);
-		accel.operator+=(cohesionF);
+		glm::vec2 cohesionF = calc_cohesion_accel(boid);
+		accel += cohesionF;
 
-		vec2d separationF = calc_separation_accel(boid);
-		accel.operator+=(separationF);
+		glm::vec2 separationF = calc_separation_accel(boid);
+		accel += separationF;
 
-		accel = accel * boid->maxSpeed;
+		accel *= boid->maxSpeed;
 
 		boid->velocity = boid->velocity + accel;
 
 		if (boid->velocity.length() > boid->maxSpeed) {
-			boid->velocity.normalize();
-			boid->velocity = boid->velocity * boid->maxSpeed;
+			boid->velocity = glm::normalize(boid->velocity);
+			boid->velocity *= boid->maxSpeed;
 		}
 	}
 }
