@@ -7,7 +7,12 @@ set(SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/source")
 set(LIB_DIR "${CMAKE_CURRENT_SOURCE_DIR}/libraries")
 set(SOURCES "${SRC_DIR}/main.cpp"
                 ${SRC_DIR}/Visualization.h
-                ${SRC_DIR}/Visualization.cpp)
+                ${SRC_DIR}/Visualization.cpp
+                ${SRC_DIR}/flock.cpp
+                ${SRC_DIR}/flock.h
+                ${SRC_DIR}/boid.h
+                ${SRC_DIR}/boid.cpp
+                )
 
 
 

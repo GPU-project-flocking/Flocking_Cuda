@@ -18,7 +18,7 @@ int main(int argc, char* argv[])
 
    //Aiden -- 2d flocking main function. feel free to delete
    
-/*   Flock* flock = new Flock(10);
+   Flock* flock = new Flock(10);
 
    int iterations = 10;
        
@@ -32,7 +32,7 @@ int main(int argc, char* argv[])
 
    }
 
-   delete flock;*/
+   delete flock;
     
    return 0;
 }

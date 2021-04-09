@@ -2,8 +2,9 @@
 #ifndef BOID_H_
 #define BOID_H_
 #include <vector>
-#include "../libraries/glm/glm.hpp"
-#include "../libraries/glm/vec2.hpp"
+//#include "../libraries/glm/glm.hpp"
+#include <glm.hpp>
+//#include "../libraries/glm/vec2.hpp"
 
 class Boid {
 public:
