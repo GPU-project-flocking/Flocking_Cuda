@@ -1,7 +1,7 @@
 cmake_minimum_required (VERSION 3.18)
 
-set(CMAKE_TOOLCHAIN_FILE C:/programs/vcpkg/vcpkg/scripts/buildsystems/vcpkg.cmake CACHE STRING "Vcpkg toolchain file")
-set(VCPKG_TARGET_TRIPLET x64-windows)
+set(CMAKE_TOOLCHAIN_FILE C:/Programs/vcpkg/scripts/buildsystems/vcpkg.cmake CACHE STRING "Vcpkg toolchain file")
+#set(VCPKG_TARGET_TRIPLET x86-windows)
 
 project (Flocking_Cuda CXX)
 
@@ -26,9 +26,9 @@ set(SOURCES "${SRC_DIR}/main.cpp"
 
 #include(C:\programs\vcpkg\vcpkg\scripts\buildsystems\vcpkg.cmake)
 
-FIND_PACKAGE(OpenSceneGraph REQUIRED COMPONENTS osgViewer osgDB osgGA osgText)
+#FIND_PACKAGE(OpenSceneGraph REQUIRED COMPONENTS osgViewer osgDB osgGA osgText)
 
-#FIND_PACKAGE(OpenSceneGraph)
+FIND_PACKAGE(OpenSceneGraph)
 
 
 
@@ -70,11 +70,11 @@ target_include_directories(${PROJECT_NAME} PRIVATE "${GLAD_DIR}/include")
 target_link_libraries(${PROJECT_NAME} "glad" "${CMAKE_DL_LIBS}")
 
 #OpenSceneGraph
-#set(OSG_DIR libraries/OpenSceneGraph)
+set(OSG_DIR libraries/OpenSceneGraph-3.6.5)
 #add_subdirectory(${OSG_DIR})
 #target_link_libraries(${PROJECT_NAME} ${OPENSCENEGRAPH_LIBRARIES} )
 #target_include_directories(${PROJECT_NAME} PRIVATE "${OSG_DIR}/include")
 
 #INCLUDE_DIRECTORIES( ${PROJECT_NAME}   ${OPENSCENEGRAPH_INCLUDE_DIRS})
 TARGET_LINK_LIBRARIES(${PROJECT_NAME}    ${OPENSCENEGRAPH_LIBRARIES})
-target_include_directories(${PROJECT_NAME} PRIVATE ${OPENSCENEGRAPH_INCLUDE_DIRS})
+target_include_directories(${PROJECT_NAME} PRIVATE ${OSG_DIR}/include)

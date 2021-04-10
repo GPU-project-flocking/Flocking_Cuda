@@ -35,5 +35,5 @@ flock_win::flock_win()
     // And now we can create a viewer to look at our geode
     osgViewer::Viewer viewer;
     viewer.setSceneData(myGeode);
-    return viewer.run();
+    viewer.run();
 }
