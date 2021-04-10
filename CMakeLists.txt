@@ -1,6 +1,8 @@
 cmake_minimum_required (VERSION 3.18)
 
 set(CMAKE_TOOLCHAIN_FILE C:/programs/vcpkg/vcpkg/scripts/buildsystems/vcpkg.cmake CACHE STRING "Vcpkg toolchain file")
+set(VCPKG_TARGET_TRIPLET x64-windows)
+
 project (Flocking_Cuda CXX)
 
 
@@ -26,6 +28,7 @@ set(SOURCES "${SRC_DIR}/main.cpp"
 
 FIND_PACKAGE(OpenSceneGraph REQUIRED COMPONENTS osgViewer osgDB osgGA osgText)
 
+#FIND_PACKAGE(OpenSceneGraph)
 
 
 
@@ -72,5 +75,6 @@ target_link_libraries(${PROJECT_NAME} "glad" "${CMAKE_DL_LIBS}")
 #target_link_libraries(${PROJECT_NAME} ${OPENSCENEGRAPH_LIBRARIES} )
 #target_include_directories(${PROJECT_NAME} PRIVATE "${OSG_DIR}/include")
 
-INCLUDE_DIRECTORIES(    ${OPENSCENEGRAPH_INCLUDE_DIRS})
+#INCLUDE_DIRECTORIES( ${PROJECT_NAME}   ${OPENSCENEGRAPH_INCLUDE_DIRS})
 TARGET_LINK_LIBRARIES(${PROJECT_NAME}    ${OPENSCENEGRAPH_LIBRARIES})
+target_include_directories(${PROJECT_NAME} PRIVATE ${OPENSCENEGRAPH_INCLUDE_DIRS})

@@ -4,6 +4,7 @@
 #include <osg/Array>
 #include <osgViewer/Viewer>
 
+
 class flock_win
 {
 private:
