@@ -3,36 +3,35 @@
 #include <iostream>
 #include "flock.h"
 
-#include "Visualization.h"
+#include "flock_win.h"
+//#include "Visualization.h"
 
 using namespace std;
 
 int main(int argc, char* argv[]) 
 {
+   flock_win* win = new flock_win();
    
-   Visualization * win = new Visualization;
-   win->test();
-   delete win;
    cout << "fuuuuuck" << endl;
    
 
    //Aiden -- 2d flocking main function. feel free to delete
    
-   Flock* flock = new Flock(10);
+   // Flock* flock = new Flock(10);
 
-   int iterations = 10;
+   // int iterations = 10;
        
-   for (int i = 0; i < iterations; i++) {
+   // for (int i = 0; i < iterations; i++) {
 
-      flock->update();
+   //    flock->update();
 
-        for (Boid* boid : flock->Boids) {
-            boid->move();
-        }
+   //      for (Boid* boid : flock->Boids) {
+   //          boid->move();
+   //      }
 
-   }
+   // }
 
-   delete flock;
+   // delete flock;
     
    return 0;
 }
