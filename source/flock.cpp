@@ -44,7 +44,7 @@ void Flock::calc_average_forward() {
 glm::vec2 Flock::calc_alignment_accel(Boid* boid) {
 	glm::vec2 avgForwardTmp = this->averageForward;
 	glm::vec2 accel = avgForwardTmp /= boid->maxSpeed;
-    
+   
 	if (accel.length() > 1) {
 		accel = glm::normalize(accel);
 	}

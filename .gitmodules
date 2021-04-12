@@ -10,6 +10,5 @@
 [submodule "libraries/glm"]
 	path = libraries/glm
 	url = https://github.com/g-truc/glm.git
-[submodule "libraries/OpenSceneGraph"]
-	path = libraries/OpenSceneGraph
-	url = https://github.com/openscenegraph/OpenSceneGraph.git
+
+

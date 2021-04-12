@@ -14,6 +14,7 @@
 #ifndef OSG_DRAWABLE
 #define OSG_DRAWABLE 1
 
+#include <GL/glut.h>
 #include <osg/BoundingBox>
 #include <osg/Shape>
 #include <osg/BufferObject>

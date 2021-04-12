@@ -1,8 +1,7 @@
 cmake_minimum_required (VERSION 3.18)
 
-set(CMAKE_TOOLCHAIN_FILE C:/Programs/vcpkg/scripts/buildsystems/vcpkg.cmake CACHE STRING "Vcpkg toolchain file")
-#set(VCPKG_TARGET_TRIPLET x86-windows)
-
+set(VCPKG_TARGET_TRIPLET x64-windows)
+set(DCMAKE_TOOLCHAIN_FILE C:/programs/vcpkg/vcpkg/scripts/buildsystems/vcpkg.cmake)
 project (Flocking_Cuda CXX)
 
 
@@ -22,13 +21,8 @@ set(SOURCES "${SRC_DIR}/main.cpp"
                 )
 
 
-#-DCMAKE_TOOLCHAIN_FILE=C:\programs\vcpkg\vcpkg\scripts\buildsystems\vcpkg.cmake
 
-#include(C:\programs\vcpkg\vcpkg\scripts\buildsystems\vcpkg.cmake)
 
-#FIND_PACKAGE(OpenSceneGraph REQUIRED COMPONENTS osgViewer osgDB osgGA osgText)
-
-FIND_PACKAGE(OpenSceneGraph)
 
 
 
@@ -38,43 +32,103 @@ add_executable (${PROJECT_NAME} ${SOURCES})
 target_include_directories(${PROJECT_NAME} PRIVATE "${SRC_DIR}")
 set_target_properties(${PROJECT_NAME} PROPERTIES LINKER_LANGUAGE CXX)
 
+find_package(glm CONFIG REQUIRED)
+target_link_libraries(${PROJECT_NAME} glm)
 
-#GLM
-set(GLM_DIR libraries/glm)
-add_subdirectory(${GLM_DIR})
-target_link_libraries(${PROJECT_NAME} glm )
-target_include_directories(${PROJECT_NAME} PRIVATE "${GLM_DIR}/glm")
+FIND_PACKAGE(OpenSceneGraph REQUIRED COMPONENTS osgViewer osgDB osgGA osgText)
+TARGET_LINK_LIBRARIES(${PROJECT_NAME} ${OPENSCENEGRAPH_LIBRARIES})
 
-#assimp
-set(assimp_DIR libraries/assimp)
-add_subdirectory(${assimp_DIR})
-target_link_libraries(${PROJECT_NAME} assimp )
-target_include_directories(${PROJECT_NAME} PRIVATE "${assimp_DIR}/include")
+# find_package(Magnum CONFIG REQUIRED)
+# target_link_libraries(${PROJECT_NAME} private Magnum::Magnum Magnum::GLContext Magnum::Application Magnum::WindowlessApplication)
 
-# GLFW
-set(GLFW_DIR "${LIB_DIR}/glfw")
-set(GLFW_BUILD_EXAMPLES OFF CACHE INTERNAL "Build the GLFW example programs")
-set(GLFW_BUILD_TESTS OFF CACHE INTERNAL "Build the GLFW test programs")
-set(GLFW_BUILD_DOCS OFF CACHE INTERNAL "Build the GLFW documentation")
-set(GLFW_INSTALL OFF CACHE INTERNAL "Generate installation target")
-add_subdirectory("${GLFW_DIR}")
-target_link_libraries(${PROJECT_NAME} "glfw" "${GLFW_LIBRARIES}")
-target_include_directories(${PROJECT_NAME} PRIVATE "${GLFW_DIR}/include")
-target_compile_definitions(${PROJECT_NAME} PRIVATE "GLFW_INCLUDE_NONE")
+# find_package(SFML CONFIG REQUIRED)
+#     # Note: 7 target(s) were omitted.
+# target_link_libraries(main PRIVATE FLAC OpenAL OpenGL Vorbis)
 
-# glad
-set(GLAD_DIR "${LIB_DIR}/glad")
-add_library("glad" "${GLAD_DIR}/src/glad.c")
-target_include_directories("glad" PRIVATE "${GLAD_DIR}/include")
-target_include_directories(${PROJECT_NAME} PRIVATE "${GLAD_DIR}/include")
-target_link_libraries(${PROJECT_NAME} "glad" "${CMAKE_DL_LIBS}")
+# #GLM
+# set(GLM_DIR libraries/glm)
+# add_subdirectory(${GLM_DIR})
+# target_link_libraries(${PROJECT_NAME} glm )
+# target_include_directories(${PROJECT_NAME} PRIVATE "${GLM_DIR}/glm")
 
-#OpenSceneGraph
-set(OSG_DIR libraries/OpenSceneGraph-3.6.5)
-#add_subdirectory(${OSG_DIR})
-#target_link_libraries(${PROJECT_NAME} ${OPENSCENEGRAPH_LIBRARIES} )
-#target_include_directories(${PROJECT_NAME} PRIVATE "${OSG_DIR}/include")
+# #assimp
+# set(assimp_DIR libraries/assimp)
+# add_subdirectory(${assimp_DIR})
+# target_link_libraries(${PROJECT_NAME} assimp )
+# target_include_directories(${PROJECT_NAME} PRIVATE "${assimp_DIR}/include")
 
-#INCLUDE_DIRECTORIES( ${PROJECT_NAME}   ${OPENSCENEGRAPH_INCLUDE_DIRS})
-TARGET_LINK_LIBRARIES(${PROJECT_NAME}    ${OPENSCENEGRAPH_LIBRARIES})
-target_include_directories(${PROJECT_NAME} PRIVATE ${OSG_DIR}/include)
+# # GLFW
+# set(GLFW_DIR "${LIB_DIR}/glfw")
+# set(GLFW_BUILD_EXAMPLES OFF CACHE INTERNAL "Build the GLFW example programs")
+# set(GLFW_BUILD_TESTS OFF CACHE INTERNAL "Build the GLFW test programs")
+# set(GLFW_BUILD_DOCS OFF CACHE INTERNAL "Build the GLFW documentation")
+# set(GLFW_INSTALL OFF CACHE INTERNAL "Generate installation target")
+# add_subdirectory("${GLFW_DIR}")
+# target_link_libraries(${PROJECT_NAME} "glfw" "${GLFW_LIBRARIES}")
+# target_include_directories(${PROJECT_NAME} PRIVATE "${GLFW_DIR}/include")
+# target_compile_definitions(${PROJECT_NAME} PRIVATE "GLFW_INCLUDE_NONE")
+
+# #glad
+# set(GLAD_DIR "${LIB_DIR}/glad")
+# add_library("glad" "${GLAD_DIR}/src/glad.c")
+# target_include_directories("glad" PRIVATE "${GLAD_DIR}/include")
+# target_include_directories(${PROJECT_NAME} PRIVATE "${GLAD_DIR}/include")
+# target_link_libraries(${PROJECT_NAME} "glad" "${CMAKE_DL_LIBS}")
+
+# #OpenSceneGraph
+# set(OSG_DIR libraries/OpenSceneGraph-3.6.5)
+# #add_subdirectory(${OSG_DIR})
+# #target_link_libraries(${PROJECT_NAME} ${OPENSCENEGRAPH_LIBRARIES} )
+# #target_include_directories(${PROJECT_NAME} PRIVATE "${OSG_DIR}/include")
+
+
+# # list(APPEND CMAKE_PREFIX_PATH " ${OSG_DIR}/lib")
+# # find_library(OSG_LIB {OSG_DIR}/lib)
+
+# # target_include_directories(${PROJECT_NAME} PRIVATE ${OSG_DIR}/include)
+# # target_link_libraries( ${PROJECT_NAME}  "${OSG_LIB}")
+# set(OSG_DIR libraries/OpenSceneGraph-3.6.5)
+
+
+# # add_library(osg SHARED IMPORTED)
+# # set_target_properties(osg PROPERTIES
+# #   IMPORTED_LOCATION "${OSG_DIR}/lib/osg"
+# #   INTERFACE_INCLUDE_DIRECTORIES "${OSG_DIR}/include/osg"
+# # )
+# # target_link_libraries(${PROJECT_NAME} osg) 
+
+# #LINK_DIRECTORIES(${OSG_DIR}/lib)
+
+# #INCLUDE_DIRECTORIES( ${PROJECT_NAME}   ${OPENSCENEGRAPH_INCLUDE_DIRS})
+
+
+
+# # add_subdirectory(${OSG_DIR}/lib)
+# # target_link_libraries(${PROJECT_NAME} osg)
+# # install(TARGETS ${PROJECT_NAME} DESTINATION ${OSG_DIR}/bin)
+
+# #add_subdirectory(${OSG_DIR})
+# # set(OSG_DIR libraries/OpenSceneGraph-3.6.5)
+
+
+# # add_library(GL STATIC ${OSG_DIR}/lib/glut32.lib)
+# # target_include_directories(${PROJECT_NAME} PRIVATE ${OSG_DIR}/include)
+# # set_target_properties(GL PROPERTIES LINKER_LANGUAGE Cxx) 
+
+# # add_library(osg STATIC ${OSG_DIR}/lib/osg.lib)
+# # target_include_directories(${PROJECT_NAME} PRIVATE ${OSG_DIR}/include)
+# # set_target_properties(osg PROPERTIES LINKER_LANGUAGE Cxx)
+# # target_include_directories(osg PRIVATE ${OSG_DIR}/include)
+# # target_link_libraries(osg GL)
+# # target_link_libraries(${PROJECT_NAME} osg)
+
+# # add_library(osgViewer STATIC ${OSG_DIR}/lib/osgViewer.lib)
+# # target_include_directories(${PROJECT_NAME} PRIVATE ${OSG_DIR}/include)
+# # set_target_properties(osgViewer PROPERTIES LINKER_LANGUAGE Cxx) 
+# # target_link_libraries(${PROJECT_NAME} osgViewer)
+
+# # add_library(osgDB STATIC ${OSG_DIR}/lib/osgDB.lib)
+# # target_include_directories(${PROJECT_NAME} PRIVATE ${OSG_DIR}/include)
+# # set_target_properties(osgDB PROPERTIES LINKER_LANGUAGE Cxx) 
+# # target_link_libraries(${PROJECT_NAME} osgDB)
+
