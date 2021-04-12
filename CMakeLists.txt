@@ -2,6 +2,7 @@ cmake_minimum_required (VERSION 3.18)
 
 set(VCPKG_TARGET_TRIPLET x64-windows)
 set(DCMAKE_TOOLCHAIN_FILE C:/programs/vcpkg/vcpkg/scripts/buildsystems/vcpkg.cmake)
+
 project (Flocking_Cuda CXX)
 
 
@@ -32,11 +33,11 @@ add_executable (${PROJECT_NAME} ${SOURCES})
 target_include_directories(${PROJECT_NAME} PRIVATE "${SRC_DIR}")
 set_target_properties(${PROJECT_NAME} PROPERTIES LINKER_LANGUAGE CXX)
 
-find_package(glm CONFIG REQUIRED)
-target_link_libraries(${PROJECT_NAME} glm)
+# find_package(glm CONFIG REQUIRED)
+# target_link_libraries(${PROJECT_NAME} glm)
 
-FIND_PACKAGE(OpenSceneGraph REQUIRED COMPONENTS osgViewer osgDB osgGA osgText)
-TARGET_LINK_LIBRARIES(${PROJECT_NAME} ${OPENSCENEGRAPH_LIBRARIES})
+# FIND_PACKAGE(OpenSceneGraph REQUIRED COMPONENTS osgViewer osgDB osgGA osgText)
+# TARGET_LINK_LIBRARIES(${PROJECT_NAME} ${OPENSCENEGRAPH_LIBRARIES})
 
 # find_package(Magnum CONFIG REQUIRED)
 # target_link_libraries(${PROJECT_NAME} private Magnum::Magnum Magnum::GLContext Magnum::Application Magnum::WindowlessApplication)

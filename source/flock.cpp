@@ -2,7 +2,7 @@
 
 Flock::Flock(int numBoids) {
 	for (int i = 0; i < numBoids; i++) {
-		this->Boids.push_back(new Boid(0, 0));
+		this->Boids.push_back(new Boid(i, i));
 	}
 
 	this->AlignmentStrength = 1;
@@ -114,4 +114,5 @@ void Flock::update() {
 			boid->velocity *= boid->maxSpeed;
 		}
 	}
+
 }

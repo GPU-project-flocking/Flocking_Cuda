@@ -10,6 +10,16 @@ First in the root directory for the project insert these commands on your termin
 Then in ./build insert this command:
 'cmake ..'
 
+^^^^^^^
+ignore that
+^^^^^^
+
+do this instead ->>>
+vcpkg install glm:x64-windows
+vcpkg install osg:x64-windows
+
+then just compile with visual studio because fuck vs code and especially fuck cmake 
+
 
 ## Sources
 

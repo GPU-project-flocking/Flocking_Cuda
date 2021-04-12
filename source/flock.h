@@ -7,6 +7,7 @@ public:
     Flock(int numBoids);
     ~Flock();
 
+
     glm::float32 AlignmentStrength;
     glm::float32 CohesionStrength;
     glm::float32 SeparationStrength;
