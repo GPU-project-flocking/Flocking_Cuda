@@ -1,0 +1,31 @@
+Parra 1 boid 1000 iter
+
+
+
+Parra 100 boid 1000 iter
+
+
+
+Parra 500 boid 1000 iter
+
+
+
+Parra 1000 boid 1000 iter
+
+
+
+Parra 10000 boid 1000 iter
+
+
+
+Parra 50000 boid 1000 iter
+
+
+
+Parra 100000 boid 1000 iter
+
+
+
+Parra 500000 boid 1000 iter
+
+

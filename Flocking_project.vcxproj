@@ -80,12 +80,18 @@
     <ClCompile Include="source\boid.cpp" />
     <ClCompile Include="source\flock.cpp" />
     <ClCompile Include="source\flock_win.cpp" />
-    <ClCompile Include="source\main.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="source\boid.h" />
     <ClInclude Include="source\flock.h" />
     <ClInclude Include="source\flock_win.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="cudaSource\testing.sh" />
+  </ItemGroup>
+  <ItemGroup>
+    <CudaCompile Include="cudaSource\flock.cu" />
+    <CudaCompile Include="cudaSource\flock_better.cu" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
