@@ -1,6 +1,8 @@
 #include <iostream>
 #include <cstdlib>
 #include <stdio.h>
+#include <string>
+#include <chrono>
 
 
 //global variables
@@ -19,15 +21,23 @@ float2  averagePos;
 float2 averageForward;
 
 #define BlockSize 256
-#define NBOIDS 1000
+#define NBOIDS 5
 #define FLOCKING_RAD 50.0f;
-#define COHESION_STRENGTH 3.0f;
-#define ALIGNMENT_STRENGTH 5.0f;
-#define SEPARATION_STRENGTH 2.0f;
-#define SAFE_RADIUS 3.0f;
+#define COHESION_STRENGTH 1.0f;
+#define ALIGNMENT_STRENGTH 1.0f;
+#define SEPARATION_STRENGTH 1.0f;
+#define SAFE_RADIUS 5.0f;
 #define MAX_SPEED 5.0f;
 
 //vector math -- may update functions
+
+__device__
+float2 negateVector(float2 a) {
+	float2 negated;
+	negated.x = -a.x;
+	negated.y = -a.y;
+	return negated;
+}
 
 __device__
 bool vector2dEquals(float2 a, float2 b) {
@@ -128,6 +138,12 @@ __global__ void updatePos(int numBoids, float2* vel_dev, float2* pos_dev) {
 	int i = (blockIdx.x * blockDim.x) + threadIdx.x;
 
 	if (i < numBoids) {
+		if (pos_dev[i].x > 10000.0f || pos_dev[i].y > 10000.0f) {
+			pos_dev[i].x = 0;
+			pos_dev[i].y = 0;
+		}
+		
+
 		pos_dev[i] = add2dVectors(pos_dev[i], vel_dev[i]);
 		//pos_dev[i] = newPos;
 	}
@@ -155,7 +171,11 @@ __device__ float2 calc_separation_accel(int numBoids, float2* pos_dev, float2* v
 
 			float2 accel = sub2dVectors(boidPos, siblingPos);
 			float dist = calcLength(accel);
-			
+			//printf("%d ", pos_dev[i].x);
+			//toggle int
+			if (dist > 8.0f) {
+				continue;
+			}
 			if (dist < safeDist) {
 				accel = normalizeVector(accel);
 				accel = divVectorByScalar(safeDist, mulVectorByScalar((safeDist - dist), accel));
@@ -233,7 +253,7 @@ void generateInitialPosition(int numBoids, float2* pos_dev, float2* vel_dev, flo
 
 __host__
 void startCuda(int numBoids) {
-	printf("\nDefining cuda variables\n");
+	//printf("\nDefining cuda variables\n");
 	dim3 fullBlocksPerGrid((int)ceil(float(numBoids) / float(BlockSize)));
 
 	// Malloc for device
@@ -256,7 +276,7 @@ void startCuda(int numBoids) {
 	}
 	
 	// Setup Kernels
-	printf("\nGenerating initial position\n");
+	//printf("\nGenerating initial position\n");
 	generateInitialPosition<<<fullBlocksPerGrid, BlockSize>>>(numBoids, pos_dev, vel_dev, acc_dev, sep_dev, align_dev, cohesion_dev);
 
 	cudaMemcpy(vel_dev, vel_host, numBoids * sizeof(float2), cudaMemcpyHostToDevice);
@@ -289,6 +309,18 @@ void update(int numBoids, float2 averagePos, float2 averageForward, float2* pos_
 		vel_dev[i] = add2dVectors(vel_dev[i], cohesion);
 		vel_dev[i] = add2dVectors(vel_dev[i], separation);
 		vel_dev[i] = add2dVectors(vel_dev[i], alignment);
+
+		if (calcLength(vel_dev[i]) > 50.0f) {
+			vel_dev[i] = normalizeVector(vel_dev[i]);
+			vel_dev[i] = mulVectorByScalar(50.0f, vel_dev[i]);
+			//printf("%d ", calcLength(vel_dev[i]));	
+		}
+		if (calcLength(vel_dev[i]) < 0.0f) {
+			vel_dev[i] = normalizeVector(vel_dev[i]);
+			vel_dev[i] = mulVectorByScalar(50.0f, vel_dev[i]);
+			//printf("%d ", calcLength(vel_dev[i]));	
+		}
+		//printf("%d ", calcLength(vel_dev[i]));	
 	}
 		
 }
@@ -296,21 +328,32 @@ void update(int numBoids, float2 averagePos, float2 averageForward, float2* pos_
 __host__
 int main(int argc, char* argv[]) 
 {
-	dim3 fullBlocksPerGrid((int)ceil(float(NBOIDS) / float(BlockSize)));
+	using std::chrono::high_resolution_clock;
+    using std::chrono::duration_cast;
+    using std::chrono::duration;
+    using std::chrono::milliseconds;
+
+    auto t1 = high_resolution_clock::now();
+
+	int numB = std::stoi(argv[1]);
+	int iterations = std::stoi(argv[2]);
+
+	dim3 fullBlocksPerGrid((int)ceil(float(numB) / float(BlockSize)));
 	
-	int iterations = 1000;
+	//int iterations = 1000;
+	
 
-  	startCuda(NBOIDS);
+  	startCuda(numB);
 
-	printf("\nRunning Simulation with %d boids and %d iterations\n", NBOIDS, iterations);
+	//printf("\nRunning Simulation with %d boids and %d iterations\n", numB, iterations);
 	for (int i = 0; i < iterations; i++) {
 		calc_average_pos();
 		calc_average_forward();
-		update<<<fullBlocksPerGrid, BlockSize>>>(NBOIDS, averagePos, averageForward, pos_dev, vel_dev, acc_dev, sep_dev, align_dev, cohesion_dev);
-		updatePos<<<fullBlocksPerGrid, BlockSize>>>(NBOIDS, vel_dev, pos_dev);
+		update<<<fullBlocksPerGrid, BlockSize>>>(numB, averagePos, averageForward, pos_dev, vel_dev, acc_dev, sep_dev, align_dev, cohesion_dev);
+		updatePos<<<fullBlocksPerGrid, BlockSize>>>(numB, vel_dev, pos_dev);
 		//for debugging will remove
-		//cudaMemcpy(vel_host, vel_dev, NBOIDS * sizeof(float2), cudaMemcpyDeviceToHost);
-		//cudaMemcpy(pos_host, pos_dev, NBOIDS * sizeof(float2), cudaMemcpyDeviceToHost);
+		//cudaMemcpy(vel_host, vel_dev, numB * sizeof(float2), cudaMemcpyDeviceToHost);
+		//cudaMemcpy(pos_host, pos_dev, numB * sizeof(float2), cudaMemcpyDeviceToHost);
 		//printf("guy1-x: %f, guy1-y: %f | ", pos_host[0].x, pos_host[0].y);
 		//printf("guy2-x: %f, guy2-y: %f\n", pos_host[1].x, pos_host[1].y);
 	}
@@ -324,5 +367,10 @@ int main(int argc, char* argv[])
    cudaFree(cohesion_dev);
 	
    free(pos_host);
+
+   auto t2 = high_resolution_clock::now();
+   duration<double, std::milli> ms_double = t2 - t1;
+   printf("%f", ms_double);
+
    return 0;
 }
