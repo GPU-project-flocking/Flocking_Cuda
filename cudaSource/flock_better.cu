@@ -1,3 +1,12 @@
+#include "cuda_runtime.h"
+#include "device_launch_parameters.h"
+#include <cuda_runtime_api.h>
+#include <stdio.h>
+#include <device_functions.h>
+#include <cuda.h>
+#include <crt/host_defines.h>
+
+
 #include <iostream>
 #include <cstdlib>
 #include <stdio.h>
@@ -140,23 +149,11 @@ __host__ void calc_average_pos() {
 	averagePos.x = sum.x / counter;
 	averagePos.y = sum.y / counter;
 
-	printf("avg pos host is: %d \n", averagePos.x);
+	//printf("avg pos host is: %d \n", averagePos.x);
 }
 
 
-// __device__ void atomicAdd_AHHHHH(float* data, float val)
-// {
-// 	float old, newval, curr = *data;
-// 	do {
-// 		// Generate new value from current data
-// 		old = curr;
-// 		newval = curr + val;
-// 		// Attempt to swap old <-> new.
-// 		curr = atomicCAS(data, old, newval);
-// 		// Repeat if value has changed in the meantime.
-// 	} while (curr != old);
-// 	
-// }
+
 
 // used this github as inspiration for this summation reduction kernel:  https://github.com/mark-poscablo/gpu-sum-reduction/blob/master/sum_reduction/reduce.cu#L196
 __global__ void calc_average_forw_and_pos_device(int numBoids, float2* vel_arr_dev, float2 vel_dev, float2* pos_arr_dev,  float2 pos_dev,float pos_tmp_dev_x, float pos_tmp_dev_y, float vel_tmp_dev_x, float vel_tmp_dev_y) {
@@ -182,44 +179,43 @@ __global__ void calc_average_forw_and_pos_device(int numBoids, float2* vel_arr_d
 		vel_tmp_dev_y = 0;
 		
 	}
-	// if(i < numBoids)
-	// {
-	// 	s_sum_vel_x[thr_idx] = vel_arr_dev[i].x + vel_arr_dev[i + blockDim.x].x;
-	// 	s_sum_vel_y[thr_idx] = vel_arr_dev[i].y + vel_arr_dev[i + blockDim.x].y;
-	//
-	// 	
-	// 	s_sum_pos_x[thr_idx] = pos_arr_dev[i].x + pos_arr_dev[i + blockDim.x].x;
-	// 	s_sum_pos_y[thr_idx] = pos_arr_dev[i].y + pos_arr_dev[i + blockDim.x].y;
-	// }
-	//
-	// __syncthreads();
+	if(i < numBoids)
+	{
+		s_sum_vel_x[thr_idx] = vel_arr_dev[i].x + vel_arr_dev[i + blockDim.x].x;
+		s_sum_vel_y[thr_idx] = vel_arr_dev[i].y + vel_arr_dev[i + blockDim.x].y;
+	
+		
+		s_sum_pos_x[thr_idx] = pos_arr_dev[i].x + pos_arr_dev[i + blockDim.x].x;
+		s_sum_pos_y[thr_idx] = pos_arr_dev[i].y + pos_arr_dev[i + blockDim.x].y;
+	}
+	
+	__syncthreads();
 	
 
-	// for (int x = blockDim.x; x > 0; x >>= 1) {
-	//
-	// 	
-	//
-	// 	if(thr_idx < x)
-	// 	{
-	// 		s_sum_vel_x[thr_idx] += s_sum_vel_x[thr_idx + x];
-	// 		s_sum_vel_y[thr_idx] += s_sum_vel_y[thr_idx + x];
-	//
-	// 		s_sum_pos_x[thr_idx] += s_sum_pos_x[thr_idx + x];
-	// 		s_sum_pos_y[thr_idx] += s_sum_pos_y[thr_idx + x];
-	// 	}
-	//
-	// 	__syncthreads();
-	// }
-	//
+	for (int x = blockDim.x; x > 0; x >>= 1) {
+	
+		
+	
+		if(thr_idx < x)
+		{
+			s_sum_vel_x[thr_idx] += s_sum_vel_x[thr_idx + x];
+			s_sum_vel_y[thr_idx] += s_sum_vel_y[thr_idx + x];
+	
+			s_sum_pos_x[thr_idx] += s_sum_pos_x[thr_idx + x];
+			s_sum_pos_y[thr_idx] += s_sum_pos_y[thr_idx + x];
+		}
+	
+		__syncthreads();
+	}
+	
 
 	 if (thr_idx == 0)
 	 {
-		 int fuck = 23;
-		 fuck = fuck + 1;
-		 //atomicAdd(&vel_tmp_dev_x, s_sum_vel_x[0]);
-		 //atomicAdd(&vel_tmp_dev_y, s_sum_vel_y[0]);
-		 // atomicAdd(&pos_tmp_dev_x, s_sum_pos_x[0]);
-		 // atomicAdd(&pos_tmp_dev_y, s_sum_pos_y[0]);
+		
+		 atomicAdd(&vel_tmp_dev_x, s_sum_vel_x[0]);
+		 atomicAdd(&vel_tmp_dev_y, s_sum_vel_y[0]);
+		 atomicAdd(&pos_tmp_dev_x, s_sum_pos_x[0]);
+		 atomicAdd(&pos_tmp_dev_y, s_sum_pos_y[0]);
 	
 
 		 
@@ -227,16 +223,15 @@ __global__ void calc_average_forw_and_pos_device(int numBoids, float2* vel_arr_d
 
 	//cudaDeviceSynchronize();
 
-	// if (threadIdx.x == 0 && blockIdx.x == 0)
-	// {
-	// 	vel_dev.x /= numBoids;
-	// 	vel_dev.y /= numBoids;
-	// 	pos_dev.x /= numBoids;
-	// 	pos_dev.y /= numBoids;
-	// 	
-	// 	printf("avg pos device is: %d \n", vel_dev.x);
-	// }
-	printf("testing \n");
+	 if (threadIdx.x == 0 && blockIdx.x == 0)
+	 {
+	 	vel_dev.x /= numBoids;
+	 	vel_dev.y /= numBoids;
+	 	pos_dev.x /= numBoids;
+	 	pos_dev.y /= numBoids;
+	 	
+	 	//printf("avg pos device is: %d \n", vel_dev.x);
+	 }
 	
 }
 
@@ -451,8 +446,10 @@ int main(int argc, char* argv[])
 
     auto t1 = high_resolution_clock::now();
 
-	int numB = 10000;
-	int iterations = 1000;
+	int numB = std::stoi(argv[1]);
+	int iterations = std::stoi(argv[2]);
+	
+	
 
 	dim3 fullBlocksPerGrid((int)ceil(float(numB) / float(BlockSize)));
 	
@@ -468,17 +465,10 @@ int main(int argc, char* argv[])
 
 		calc_average_forw_and_pos_device<< <fullBlocksPerGrid, BlockSize, numB >> > (numB, vel_dev, averageForward, pos_dev, averagePos, pos_tmp_dev_x, pos_tmp_dev_y, vel_tmp_dev_x, vel_tmp_dev_y);
 
-		cudaError_t err = cudaGetLastError();
-
-		if (err != cudaSuccess)
-		{
-			printf("CUDA Error: %s\n", cudaGetErrorString(err));
-
-			// Possibly: exit(-1) if program cannot continue....
-		}
 		
-		calc_average_pos();
-		calc_average_forward();
+		
+		// calc_average_pos();
+		// calc_average_forward();
 		update<<<fullBlocksPerGrid, BlockSize>>>(numB, averagePos, averageForward, pos_dev, vel_dev, acc_dev, sep_dev, align_dev, cohesion_dev);
 		updatePos<<<fullBlocksPerGrid, BlockSize>>>(numB, vel_dev, pos_dev);
 		//for debugging will remove

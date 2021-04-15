@@ -1,3 +1,11 @@
+#include "cuda_runtime.h"
+#include "device_launch_parameters.h"
+#include <cuda_runtime_api.h>
+#include <stdio.h>
+#include <device_functions.h>
+#include <cuda.h>
+#include <crt/host_defines.h>
+
 #include <iostream>
 #include <cstdlib>
 #include <stdio.h>
@@ -338,6 +346,8 @@ int main(int argc, char* argv[])
 	int numB = std::stoi(argv[1]);
 	int iterations = std::stoi(argv[2]);
 
+	
+
 	dim3 fullBlocksPerGrid((int)ceil(float(numB) / float(BlockSize)));
 	
 	//int iterations = 1000;
@@ -347,8 +357,13 @@ int main(int argc, char* argv[])
 
 	//printf("\nRunning Simulation with %d boids and %d iterations\n", numB, iterations);
 	for (int i = 0; i < iterations; i++) {
+		
+		cudaMemcpy(vel_host, vel_dev, numB * sizeof(float2), cudaMemcpyDeviceToHost);
+		cudaMemcpy(pos_host, pos_dev, numB * sizeof(float2), cudaMemcpyDeviceToHost);
 		calc_average_pos();
 		calc_average_forward();
+		
+		
 		update<<<fullBlocksPerGrid, BlockSize>>>(numB, averagePos, averageForward, pos_dev, vel_dev, acc_dev, sep_dev, align_dev, cohesion_dev);
 		updatePos<<<fullBlocksPerGrid, BlockSize>>>(numB, vel_dev, pos_dev);
 		//for debugging will remove

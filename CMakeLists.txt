@@ -40,7 +40,9 @@ set(SOURCES "${SRC_DIR}/main.cpp"
 
 
 
-add_executable(flocking cudaSource/flock_better.cu)
+add_executable(flocking_better cudaSource/flock_better.cu)
+add_executable(flocking cudaSource/flock.cu)
+
 
 add_executable (${PROJECT_NAME} ${SOURCES})
 target_include_directories(${PROJECT_NAME} PRIVATE "${SRC_DIR}")
