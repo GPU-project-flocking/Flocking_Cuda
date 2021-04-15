@@ -1,7 +1,7 @@
 cmake_minimum_required (VERSION 3.18)
 
-set(VCPKG_TARGET_TRIPLET x64-windows)
-set(DCMAKE_TOOLCHAIN_FILE C:/programs/vcpkg/vcpkg/scripts/buildsystems/vcpkg.cmake)
+#set(VCPKG_TARGET_TRIPLET x64-windows)
+#set(DCMAKE_TOOLCHAIN_FILE C:/programs/vcpkg/vcpkg/scripts/buildsystems/vcpkg.cmake)
 
 project (Flocking_Cuda CXX)
 

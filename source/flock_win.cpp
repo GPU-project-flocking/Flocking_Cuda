@@ -3,6 +3,7 @@
 
 #include <math.h> 
 #include<windows.h>
+#include <chrono>
 
 
 flock_win::flock_win(Flock* flock)
@@ -67,9 +68,11 @@ flock_win::flock_win(Flock* flock)
 
     osg::ref_ptr<osg::MatrixTransform> positioned = new osg::MatrixTransform;
     positioned.get()->addChild(geode);
+
+	
     
 
-    for (int i = 0; i < 10; i++)
+    for (int i = 0; i < flock->Boids.size(); i++)
     {
         osg::ref_ptr<osg::MatrixTransform> positioned = new osg::MatrixTransform;
         positions.push_back(positioned);
@@ -81,7 +84,7 @@ flock_win::flock_win(Flock* flock)
 
         root.get()->addChild(positioned);
 
-        osg::Matrix mTrans = osg::Matrix::scale(osg::Vec3(10, 10, 10));
+        osg::Matrix mTrans = osg::Matrix::scale(osg::Vec3(60, 60, 60));
         positioned.get()->setMatrix(mTrans);
 
 
@@ -96,34 +99,38 @@ flock_win::flock_win(Flock* flock)
 
     win = new osgViewer::Viewer;
     win->setSceneData(root);
-    win->setUpViewInWindow(10,35,1000,800,0);
+    win->setUpViewInWindow(10,35,1000,900,0);
         
     win->realize();
     osg::ref_ptr<osgGA::TrackballManipulator> tm = new osgGA::TrackballManipulator;
     
     win->setCameraManipulator(tm);
     int counter = 0;
+    auto now = std::chrono::high_resolution_clock::now();
+
+
     while(!win->done())
     {
         counter++;
-        osg::Matrix mRot  = osg::Matrix::rotate(osg::DegreesToRadians(double(counter)), osg::Z_AXIS);
-        int temp = counter%2 == 1 ? 0 : 30;
-        osg::Matrix mTrans = osg::Matrix::translate(0, temp, temp);
-        positioned.get()->setMatrix(mTrans);
+      
         
+        auto later = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<double> elapsed = later - now;
+        now = std::chrono::high_resolution_clock::now();
 
-        flock->update();
+        flock->update(elapsed.count()/1000);
+    	
+        std::cout << elapsed.count() << std::endl;
 
         for (Boid* boid : flock->Boids) {
-            boid->move();
+            boid->move(elapsed.count() / 1000);
         }
 
         update(flock->Boids);
         
         win->frame();
 
-        Sleep(1000);
-        std::cout << "next cylce" << counter << std::endl;
+        Sleep(5);
     }
 }
 
@@ -135,20 +142,23 @@ void flock_win::update(std::vector<Boid*> boids)
 
         
 
-        osg::Matrix mTrans = osg::Matrix::translate(temp->position.x, 100 , temp->position.y);
+        osg::Matrix mTrans = osg::Matrix::translate(temp->position.x, 300 , temp->position.y);
 
         osg::Vec2 tempy(temp->velocity.x, temp->velocity.y);
         tempy.normalize();
         
         double angle = std::acos(tempy * osg::Vec2(0, 1))  * 180 / 3.14159265359;
 
+    	if(tempy.x() <0)
+    	{
+            angle = (180 - angle) + 180;
+    	}
+
         osg::Matrix mRot = osg::Matrix::rotate(osg::DegreesToRadians(double(angle)), osg::Y_AXIS);
 
         osg::Matrix m = mRot * mTrans;
-        std::cout << "position.x"<<temp->position.x << " and the rotation is " << angle << std::endl;
         positions[i].get()->setMatrix(m);
         
-
         
 
 

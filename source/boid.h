@@ -8,11 +8,15 @@
 #include <glm/glm.hpp>
 
 
+
+
+
+
 //#include "../libraries/glm/vec2.hpp"
 
 class Boid {
 public:
-    Boid(double x, double y);
+    Boid();
     ~Boid();
 
     glm::vec2 position;
@@ -21,6 +25,10 @@ public:
     double maxSpeed;
     double safeRadius;
 
-    void move();
+    int max = 6000;
+    int min = -1000;
+	
+    void set_start_pos();
+    void move(double delta_time);
 };
 #endif

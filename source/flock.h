@@ -1,4 +1,5 @@
 #pragma once
+#include <random>
 #include <vector>
 #include "boid.h"
 class Flock
@@ -6,6 +7,9 @@ class Flock
 public:
     Flock(int numBoids);
     ~Flock();
+
+    
+    
 
 
     glm::float32 AlignmentStrength;
@@ -16,12 +20,15 @@ public:
     glm::vec2 averageForward;
     glm::float32 flockRadius;
 
+	
+	
+    void spawn_boid();
     void calc_average_pos();
     void calc_average_forward();
     glm::vec2 calc_alignment_accel(Boid* boid);
     glm::vec2 calc_cohesion_accel(Boid* boid);
     glm::vec2 calc_separation_accel(Boid* boid);
 
-    void update();
+    void update(double delta_time);
 };
 
