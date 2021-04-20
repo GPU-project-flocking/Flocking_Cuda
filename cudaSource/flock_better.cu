@@ -1,12 +1,12 @@
-#include "cuda_runtime.h"
+//These includes are for running on a personal computer
+/*#include "cuda_runtime.h"
 #include "device_launch_parameters.h"
 #include <cuda_runtime_api.h>
 #include <stdio.h>
 #include <device_functions.h>
 #include <cuda.h>
 #include <crt/host_defines.h>
-
-
+*/
 #include <iostream>
 #include <cstdlib>
 #include <stdio.h>
@@ -14,13 +14,13 @@
 #include <chrono>
 
 
+//global variables definitions for the boids on both device and host
 //global variables
 float pos_tmp_dev_x;
 float pos_tmp_dev_y;
 
 float vel_tmp_dev_x;
 float vel_tmp_dev_y;
-
 
 float2* pos_dev;
 float2* vel_dev;
@@ -33,30 +33,21 @@ float2* cohesion_dev;
 float2* pos_host;
 float2* vel_host;
 
-float2  averagePos;
+float2 averagePos;
 float2 averageForward;
 
+//all of our hard coded values we can change
 #define BlockSize 256
-#define NBOIDS 5
-#define FLOCKING_RAD 50.0f;
-#define COHESION_STRENGTH 1.0f;
-#define ALIGNMENT_STRENGTH 1.0f;
-#define SEPARATION_STRENGTH 1.0f;
-#define SAFE_RADIUS 5.0f;
-#define MAX_SPEED 5.0f;
+#define FLOCKING_RAD 50.0f
+#define COHESION_STRENGTH 3.0f
+#define ALIGNMENT_STRENGTH 5.0f
+#define SEPARATION_STRENGTH 2.0f
+#define SAFE_RADIUS 3.0f
+#define MAX_SPEED 5.0f
 
-//vector math -- may update functions
+//vector math functions for the 2d vectors -- naive
 
-__device__
-float2 negateVector(float2 a) {
-	float2 negated;
-	negated.x = -a.x;
-	negated.y = -a.y;
-	return negated;
-}
-
-__device__
-bool vector2dEquals(float2 a, float2 b) {
+__device__ bool vector2dEquals(float2 a, float2 b) {
 	if (a.x == b.x && a.y == b.y) {
 		return true;
 	} else {
@@ -64,95 +55,46 @@ bool vector2dEquals(float2 a, float2 b) {
 	}
 }
 
-__device__
-float distance(float2 myPos, float2 theirPos) {
-	float dx = myPos.x - theirPos.x;
-	float dy = myPos.y - theirPos.y;
-
-	float dist = sqrt(dx*dx + dy*dy);
-	return dist;
+__device__ float calcLength(float2 vec) {
+	return sqrt(vec.x * vec.x + vec.y * vec.y);
 }
 
-
-__device__
-float2 add2dVectors(float2 v1, float2 v2) {
-	float2 temp = make_float2(v1.x, v1.y);
-	temp.x += v2.x;
-	temp.y += v2.y;
-	return temp;
+__device__ float distance(float2 vec1, float2 vec2) {
+	float finalDistance = sqrt(((vec1.x - vec2.x)*(vec1.x - vec2.x)) + ((vec1.y - vec2.y)*(vec1.y - vec2.y)));	
+	return finalDistance;
 }
 
-__device__
-float2 sub2dVectors(float2 v1, float2 v2) {
-	float2 temp = make_float2(v1.x, v1.y);
-	temp.x -= v2.x;
-	temp.y -= v2.y;
-	return temp;
+__device__ float2 subVecs(float2 vec1, float2 vec2) {
+	float2 finalVec = make_float2(vec1.x - vec2.x, vec1.y - vec2.y);
+	return finalVec;
 }
 
-__device__
-float2 mulVectorByScalar(float scalar, float2 vector) {
-	// Temp to not overwrite original vector
-	float2 temp = make_float2(vector.x, vector.y);
-	temp.x *= scalar;
-	temp.y *= scalar;
-	return temp;
+__device__ float2 addVecs(float2 vec1, float2 vec2) {
+	float2 finalVec = make_float2(vec1.x + vec2.x, vec1.y + vec2.y);
+	return finalVec;
 }
 
-__device__
-float2 divVectorByScalar(float scalar, float2 vector) {
-	float2 temp = make_float2(vector.x, vector.y);
-	temp.x /= scalar;
-	temp.y /= scalar;
-	return temp;
+__device__ float2 divideVec(float scalar, float2 vector) {
+	float2 finalVec = make_float2(vector.x / scalar, vector.y / scalar);
+	return finalVec;
 }
 
-__device__
-float calcLength(float2 vec) {
-	return sqrt(vec.x * vec.x + vec.y * vec.y
-	);
+__device__ float2 multiplyVec(float scalar, float2 vector) {
+	float2 finalVec = make_float2(vector.x * scalar, vector.y * scalar);
+	return finalVec;
 }
 
-__device__
-float2 normalizeVector(float2 vector) {
-	float2 temp = make_float2(vector.x, vector.y);
-	float length = calcLength(temp);
+__device__ float2 normalize(float2 vector) {
+	float length = calcLength(vector);
 	if (length > 0) {
-		temp.x /= length;
-		temp.y /= length;
+		float2 finalVec = make_float2(vector.x / length, vector.y / length);
+		return finalVec;
+	} else {
+		return vector;
 	}
-	return temp;
 }
 
 //-----------------end vec funcs------------------------
-
-__host__ void calc_average_forward() {
-	int counter = 0;
-	float2 sum = make_float2(0.0, 0.0);
-	for (int i = 0; i < NBOIDS; i++) {
-		sum.x += vel_host[i].x;
-		sum.y += vel_host[i].y;
-		counter++;
-	}
-	averageForward.x = sum.x / counter;
-	averageForward.y = sum.y / counter;
-}
-
-__host__ void calc_average_pos() {
-	int counter = 0;
-	float2 sum = make_float2(0.0, 0.0);
-	for (int i = 0; i < NBOIDS; i++) {
-		sum.x += pos_host[i].x;
-		sum.y += pos_host[i].y;
-		counter++;
-	}
-	averagePos.x = sum.x / counter;
-	averagePos.y = sum.y / counter;
-
-	//printf("avg pos host is: %d \n", averagePos.x);
-}
-
-
 
 
 // used this github as inspiration for this summation reduction kernel:  https://github.com/mark-poscablo/gpu-sum-reduction/blob/master/sum_reduction/reduce.cu#L196
@@ -236,22 +178,22 @@ __global__ void calc_average_forw_and_pos_device(int numBoids, float2* vel_arr_d
 }
 
 
-
+//updates the position of all the boids
 __global__ void updatePos(int numBoids, float2* vel_dev, float2* pos_dev) {
 	int i = (blockIdx.x * blockDim.x) + threadIdx.x;
 
+	//if boids get too far away set their position to 0;
 	if (i < numBoids) {
 		if (pos_dev[i].x > 10000.0f || pos_dev[i].y > 10000.0f) {
 			pos_dev[i].x = 0;
 			pos_dev[i].y = 0;
 		}
-		
 
-		pos_dev[i] = add2dVectors(pos_dev[i], vel_dev[i]);
-		//pos_dev[i] = newPos;
+		pos_dev[i] = addVecs(pos_dev[i], vel_dev[i]);
 	}
 }
 
+//calculates the separation vector for each boid
 __device__ float2 calc_separation_accel(int numBoids, float2* pos_dev, float2* vel_dev) {
 	int i = (blockIdx.x * blockDim.x) + threadIdx.x;
 	float safeDist = SAFE_RADIUS;
@@ -264,38 +206,39 @@ __device__ float2 calc_separation_accel(int numBoids, float2* pos_dev, float2* v
 		float2 boidVel = make_float2(vel_dev[i].x, vel_dev[i].y);
 
 		for (int i = 0; i < numBoids; i++) {
-			//printf("%s", vector2dEquals(boidPos, pos_dev[i]) && vector2dEquals(boidVel, vel_dev[i]) ? "true\n" : "");
 			float2 siblingPos = pos_dev[i];
 			float2 siblingVel = vel_dev[i];
-			//check to see if current boid is self
+			//skip if current boid is self
 			if (vector2dEquals(boidPos, siblingPos) && vector2dEquals(boidVel, siblingVel)) {
 				continue;
 			}
 
-			float2 accel = sub2dVectors(boidPos, siblingPos);
+			float2 accel = subVecs(boidPos, siblingPos);
 			float dist = calcLength(accel);
-			//printf("%d ", pos_dev[i].x);
-			//toggle int
+
 			if (dist > 8.0f) {
 				continue;
 			}
+
 			if (dist < safeDist) {
-				accel = normalizeVector(accel);
-				accel = divVectorByScalar(safeDist, mulVectorByScalar((safeDist - dist), accel));
-				totalVel = add2dVectors(totalVel, accel);
+				accel = normalize(accel);
+				accel = divideVec(safeDist, multiplyVec((safeDist - dist), accel));
+				totalVel = addVecs(totalVel, accel);
 			}
 		}
 
 		if (calcLength(totalVel) > 1) {
-			totalVel = normalizeVector(totalVel);
+			totalVel = normalize(totalVel);
 		}
 
-		return mulVectorByScalar(separationStrength, totalVel);
+		return multiplyVec(separationStrength, totalVel);
 	}
 
 	return make_float2(0.0f, 0.0f);
 }
 
+
+//calculates the alignment vector for each boid
 __device__ float2 calc_alignment_accel(int numBoids, float2 averageForward) {
 	float maxSpeed = MAX_SPEED;
 	float alignStr = ALIGNMENT_STRENGTH;
@@ -303,32 +246,33 @@ __device__ float2 calc_alignment_accel(int numBoids, float2 averageForward) {
 	int i = (blockIdx.x * blockDim.x) + threadIdx.x;
 
 	if (i < numBoids) {
-		float2 accel = divVectorByScalar(maxSpeed, averageForward);
+		float2 accel = divideVec(maxSpeed, averageForward);
 		if (calcLength(accel) > 1) {
-			accel = normalizeVector(accel);
+			accel = normalize(accel);
 		}
-		return mulVectorByScalar(alignStr, accel);
+		return multiplyVec(alignStr, accel);
 	}
 	return make_float2(0.0f, 0.0f);
 }
 
+//calculates the cohesion vector for each boid
 __device__ float2 calc_cohesion_accel(int numBoids, float2 averagePos, float2* pos_dev) {
 	float flockRad = FLOCKING_RAD;
 	float cohesionStr = COHESION_STRENGTH;
 
 	int i = (blockIdx.x * blockDim.x) + threadIdx.x;
 	if (i < numBoids) {
-		float2 accel = sub2dVectors(averagePos, pos_dev[i]);
+		float2 accel = subVecs(averagePos, pos_dev[i]);
 		float dist = calcLength(pos_dev[i]);
 
-		accel = normalizeVector(accel);
+		accel = normalize(accel);
 
 		if(dist < flockRad) {
-			accel = mulVectorByScalar(dist, accel);
-			accel = divVectorByScalar(flockRad, accel);
+			accel = multiplyVec(dist, accel);
+			accel = divideVec(flockRad, accel);
 		}
 
-		return mulVectorByScalar(cohesionStr, accel);
+		return multiplyVec(cohesionStr, accel);
 	}
 	return make_float2(0.0f, 0.0f);
 }
@@ -350,16 +294,14 @@ void generateInitialPosition(int numBoids, float2* pos_dev, float2* vel_dev, flo
 		cohesion_dev[i].x = 0.0f;
 		cohesion_dev[i].y = 0.0f;
 		
+		
 	}
 	
 }
 
-__host__
-void startCuda(int numBoids) {
+__host__ void startCuda(int numBoids) {
 	//printf("\nDefining cuda variables\n");
 	dim3 fullBlocksPerGrid((int)ceil(float(numBoids) / float(BlockSize)));
-
-
 
 	// Malloc for device
 	cudaMalloc((void**)&pos_tmp_dev_x,sizeof(float));
@@ -375,6 +317,9 @@ void startCuda(int numBoids) {
 	cudaMalloc((void**)&sep_dev, numBoids * sizeof(float2));
 	cudaMalloc((void**)&align_dev, numBoids * sizeof(float2));
 	cudaMalloc((void**)&cohesion_dev, numBoids * sizeof(float2));
+
+	cudaMalloc((void**)&averagePos, sizeof(float2));
+	cudaMalloc((void**)&averageForward, sizeof(float2));
 
 	//malloc for host
 	pos_host = (float2*)malloc(numBoids * sizeof(float2));
@@ -402,8 +347,8 @@ void startCuda(int numBoids) {
 	}*/
 }
 
-__global__
-void update(int numBoids, float2 averagePos, float2 averageForward, float2* pos_dev, float2* vel_dev, float2* acc_dev, float2* sep_dev, float2* align_dev, float2* cohesion_dev) {
+//update kernel that calls cohesion, separation and alignment
+__global__ void update(int numBoids, float2 averagePos, float2 averageForward, float2* pos_dev, float2* vel_dev, float2* acc_dev, float2* sep_dev, float2* align_dev, float2* cohesion_dev) {
 	dim3 fullBlocksPerGrid((int)ceil(float(numBoids) / float(BlockSize)));
 	int i = (blockIdx.x * blockDim.x) + threadIdx.x;
 
@@ -417,24 +362,25 @@ void update(int numBoids, float2 averagePos, float2 averageForward, float2* pos_
 		
 		//printf("cohesion: %f\nseparation: %f\nalignment: %f\n", cohesion, separation, alignment);
 
-		vel_dev[i] = add2dVectors(vel_dev[i], cohesion);
-		vel_dev[i] = add2dVectors(vel_dev[i], separation);
-		vel_dev[i] = add2dVectors(vel_dev[i], alignment);
+		vel_dev[i] = addVecs(vel_dev[i], cohesion);
+		vel_dev[i] = addVecs(vel_dev[i], separation);
+		vel_dev[i] = addVecs(vel_dev[i], alignment);
 
 		if (calcLength(vel_dev[i]) > 50.0f) {
-			vel_dev[i] = normalizeVector(vel_dev[i]);
-			vel_dev[i] = mulVectorByScalar(50.0f, vel_dev[i]);
+			vel_dev[i] = normalize(vel_dev[i]);
+			vel_dev[i] = multiplyVec(50.0f, vel_dev[i]);
 			//printf("%d ", calcLength(vel_dev[i]));	
 		}
 		if (calcLength(vel_dev[i]) < 0.0f) {
-			vel_dev[i] = normalizeVector(vel_dev[i]);
-			vel_dev[i] = mulVectorByScalar(50.0f, vel_dev[i]);
+			vel_dev[i] = normalize(vel_dev[i]);
+			vel_dev[i] = multiplyVec(50.0f, vel_dev[i]);
 			//printf("%d ", calcLength(vel_dev[i]));	
 		}
 		//printf("%d ", calcLength(vel_dev[i]));	
 	}
 		
 }
+
 
 __host__
 int main(int argc, char* argv[]) 
@@ -449,33 +395,22 @@ int main(int argc, char* argv[])
 	int numB = std::stoi(argv[1]);
 	int iterations = std::stoi(argv[2]);
 	
-	
-
 	dim3 fullBlocksPerGrid((int)ceil(float(numB) / float(BlockSize)));
-	
-	//int iterations = 1000;
-	
 
   	startCuda(numB);
 
 	//printf("\nRunning Simulation with %d boids and %d iterations\n", numB, iterations);
 	for (int i = 0; i < iterations; i++) {
 
-		
-
 		calc_average_forw_and_pos_device<< <fullBlocksPerGrid, BlockSize, numB >> > (numB, vel_dev, averageForward, pos_dev, averagePos, pos_tmp_dev_x, pos_tmp_dev_y, vel_tmp_dev_x, vel_tmp_dev_y);
 
-		
-		
-		// calc_average_pos();
-		// calc_average_forward();
 		update<<<fullBlocksPerGrid, BlockSize>>>(numB, averagePos, averageForward, pos_dev, vel_dev, acc_dev, sep_dev, align_dev, cohesion_dev);
 		updatePos<<<fullBlocksPerGrid, BlockSize>>>(numB, vel_dev, pos_dev);
 		//for debugging will remove
-		//cudaMemcpy(vel_host, vel_dev, numB * sizeof(float2), cudaMemcpyDeviceToHost);
-		//cudaMemcpy(pos_host, pos_dev, numB * sizeof(float2), cudaMemcpyDeviceToHost);
-		//printf("guy1-x: %f, guy1-y: %f | ", pos_host[0].x, pos_host[0].y);
-		//printf("guy2-x: %f, guy2-y: %f\n", pos_host[1].x, pos_host[1].y);
+		cudaMemcpy(vel_host, vel_dev, numB * sizeof(float2), cudaMemcpyDeviceToHost);
+		cudaMemcpy(pos_host, pos_dev, numB * sizeof(float2), cudaMemcpyDeviceToHost);
+		printf("guy1-x: %f, guy1-y: %f | ", pos_host[0].x, pos_host[0].y);
+		printf("guy2-x: %f, guy2-y: %f\n", pos_host[1].x, pos_host[1].y);
 	}
 
     
