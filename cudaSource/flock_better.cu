@@ -15,7 +15,6 @@
 
 
 //global variables definitions for the boids on both device and host
-//global variables
 float pos_tmp_dev_x;
 float pos_tmp_dev_y;
 
@@ -407,10 +406,10 @@ int main(int argc, char* argv[])
 		update<<<fullBlocksPerGrid, BlockSize>>>(numB, averagePos, averageForward, pos_dev, vel_dev, acc_dev, sep_dev, align_dev, cohesion_dev);
 		updatePos<<<fullBlocksPerGrid, BlockSize>>>(numB, vel_dev, pos_dev);
 		//for debugging will remove
-		cudaMemcpy(vel_host, vel_dev, numB * sizeof(float2), cudaMemcpyDeviceToHost);
-		cudaMemcpy(pos_host, pos_dev, numB * sizeof(float2), cudaMemcpyDeviceToHost);
-		printf("guy1-x: %f, guy1-y: %f | ", pos_host[0].x, pos_host[0].y);
-		printf("guy2-x: %f, guy2-y: %f\n", pos_host[1].x, pos_host[1].y);
+		//cudaMemcpy(vel_host, vel_dev, numB * sizeof(float2), cudaMemcpyDeviceToHost);
+		//cudaMemcpy(pos_host, pos_dev, numB * sizeof(float2), cudaMemcpyDeviceToHost);
+		//printf("guy1-x: %f, guy1-y: %f | ", pos_host[0].x, pos_host[0].y);
+		//printf("guy2-x: %f, guy2-y: %f\n", pos_host[1].x, pos_host[1].y);
 	}
 
     
