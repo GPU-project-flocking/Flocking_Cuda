@@ -1,12 +1,12 @@
 //These includes are for running on a personal computer
-/*#include "cuda_runtime.h"
+#include "cuda_runtime.h"
 #include "device_launch_parameters.h"
 #include <cuda_runtime_api.h>
 #include <stdio.h>
 #include <device_functions.h>
 #include <cuda.h>
-#include <crt/host_defines.h>
-*/
+
+#include "flock_better.cuh"
 #include <iostream>
 #include <cstdlib>
 #include <stdio.h>
@@ -14,12 +14,14 @@
 #include <chrono>
 
 
-//global variables definitions for the boids on both device and host
-float pos_tmp_dev_x;
-float pos_tmp_dev_y;
 
-float vel_tmp_dev_x;
-float vel_tmp_dev_y;
+
+//global variables definitions for the boids on both device and host
+float* pos_tmp_dev_x;
+float* pos_tmp_dev_y;
+
+float* vel_tmp_dev_x;
+float* vel_tmp_dev_y;
 
 float2* pos_dev;
 float2* vel_dev;
@@ -97,7 +99,7 @@ __device__ float2 normalize(float2 vector) {
 
 
 // used this github as inspiration for this summation reduction kernel:  https://github.com/mark-poscablo/gpu-sum-reduction/blob/master/sum_reduction/reduce.cu#L196
-__global__ void calc_average_forw_and_pos_device(int numBoids, float2* vel_arr_dev, float2 vel_dev, float2* pos_arr_dev,  float2 pos_dev,float pos_tmp_dev_x, float pos_tmp_dev_y, float vel_tmp_dev_x, float vel_tmp_dev_y) {
+__global__ void calc_average_forw_and_pos_device(int numBoids, float2* vel_arr_dev, float2 vel_dev, float2* pos_arr_dev,  float2 pos_dev,float* pos_tmp_dev_x, float* pos_tmp_dev_y, float* vel_tmp_dev_x, float* vel_tmp_dev_y) {
 
 	extern __shared__ float s_sum_pos_x[];
 	extern __shared__ float s_sum_pos_y[];
@@ -112,14 +114,14 @@ __global__ void calc_average_forw_and_pos_device(int numBoids, float2* vel_arr_d
 	s_sum_pos_x[thr_idx] = 0;
 	s_sum_pos_y[thr_idx] = 0;
 
-	if (threadIdx.x == 0 && blockIdx.x == 0)
+	/*if (threadIdx.x == 0 && blockIdx.x == 0)
 	{
 		pos_tmp_dev_x = 0;
 		pos_tmp_dev_y = 0;
 		vel_tmp_dev_x = 0;
 		vel_tmp_dev_y = 0;
 		
-	}
+	}*/
 	if(i < numBoids)
 	{
 		s_sum_vel_x[thr_idx] = vel_arr_dev[i].x + vel_arr_dev[i + blockDim.x].x;
@@ -153,10 +155,10 @@ __global__ void calc_average_forw_and_pos_device(int numBoids, float2* vel_arr_d
 	 if (thr_idx == 0)
 	 {
 		
-		 atomicAdd(&vel_tmp_dev_x, s_sum_vel_x[0]);
-		 atomicAdd(&vel_tmp_dev_y, s_sum_vel_y[0]);
-		 atomicAdd(&pos_tmp_dev_x, s_sum_pos_x[0]);
-		 atomicAdd(&pos_tmp_dev_y, s_sum_pos_y[0]);
+		 atomicAdd(vel_tmp_dev_x, s_sum_vel_x[0]);
+		 atomicAdd(vel_tmp_dev_y, s_sum_vel_y[0]);
+		 atomicAdd(pos_tmp_dev_x, s_sum_pos_x[0]);
+		 atomicAdd(pos_tmp_dev_y, s_sum_pos_y[0]);
 	
 
 		 
@@ -166,13 +168,14 @@ __global__ void calc_average_forw_and_pos_device(int numBoids, float2* vel_arr_d
 
 	 if (threadIdx.x == 0 && blockIdx.x == 0)
 	 {
-	 	vel_dev.x /= numBoids;
-	 	vel_dev.y /= numBoids;
-	 	pos_dev.x /= numBoids;
-	 	pos_dev.y /= numBoids;
-	 	
+	 	vel_dev.x = *vel_tmp_dev_x / numBoids;
+	 	vel_dev.y = *vel_tmp_dev_y / numBoids;
+	 	pos_dev.x = *pos_tmp_dev_x / numBoids;
+	 	pos_dev.y = *pos_tmp_dev_y / numBoids;
+		printf("test");
 	 	//printf("avg pos device is: %d \n", vel_dev.x);
 	 }
+	 //printf("test");
 	
 }
 
@@ -332,6 +335,9 @@ __host__ void startCuda(int numBoids) {
 	
 	// Setup Kernels
 	//printf("\nGenerating initial position\n");
+
+	
+
 	generateInitialPosition<<<fullBlocksPerGrid, BlockSize>>>(numBoids, pos_dev, vel_dev, acc_dev, sep_dev, align_dev, cohesion_dev);
 
 	cudaMemcpy(vel_dev, vel_host, numBoids * sizeof(float2), cudaMemcpyHostToDevice);
@@ -348,7 +354,7 @@ __host__ void startCuda(int numBoids) {
 
 //update kernel that calls cohesion, separation and alignment
 __global__ void update(int numBoids, float2 averagePos, float2 averageForward, float2* pos_dev, float2* vel_dev, float2* acc_dev, float2* sep_dev, float2* align_dev, float2* cohesion_dev) {
-	dim3 fullBlocksPerGrid((int)ceil(float(numBoids) / float(BlockSize)));
+	//dim3 fullBlocksPerGrid((int)ceil(float(numBoids) / float(BlockSize)));
 	int i = (blockIdx.x * blockDim.x) + threadIdx.x;
 
 	if (i < numBoids) {
@@ -379,52 +385,122 @@ __global__ void update(int numBoids, float2 averagePos, float2 averageForward, f
 	}
 		
 }
-
+//
+//
+//__host__
+//int main(int argc, char* argv[]) 
+//{
+//	using std::chrono::high_resolution_clock;
+//    using std::chrono::duration_cast;
+//    using std::chrono::duration;
+//    using std::chrono::milliseconds;
+//
+//    auto t1 = high_resolution_clock::now();
+//
+//	/*int numB = std::stoi(argv[1]);
+//	int iterations = std::stoi(argv[2]);*/
+//
+//	int numB = 1000;
+//	int iterations = 1000;
+//	
+//	dim3 fullBlocksPerGrid((int)ceil(float(numB) / float(BlockSize)));
+//
+//  	startCuda(numB);
+//
+//	//printf("\nRunning Simulation with %d boids and %d iterations\n", numB, iterations);
+//	for (int i = 0; i < iterations; i++) {
+//
+//		cudaMemcpy(pos_tmp_dev_x, 0, sizeof(float), cudaMemcpyHostToDevice);
+//		cudaMemcpy(pos_tmp_dev_y, 0, sizeof(float), cudaMemcpyHostToDevice);
+//		cudaMemcpy(vel_tmp_dev_x, 0, sizeof(float), cudaMemcpyHostToDevice);
+//		cudaMemcpy(vel_tmp_dev_y, 0, sizeof(float), cudaMemcpyHostToDevice);
+//		calc_average_forw_and_pos_device<< <fullBlocksPerGrid, BlockSize, numB >> > (numB, vel_dev, averageForward, pos_dev, averagePos, pos_tmp_dev_x, pos_tmp_dev_y, vel_tmp_dev_x, vel_tmp_dev_y);
+//
+//		update<<<fullBlocksPerGrid, BlockSize>>>(numB, averagePos, averageForward, pos_dev, vel_dev, acc_dev, sep_dev, align_dev, cohesion_dev);
+//		updatePos<<<fullBlocksPerGrid, BlockSize>>>(numB, vel_dev, pos_dev);
+//		//for debugging will remove
+//		//cudaMemcpy(vel_host, vel_dev, numB * sizeof(float2), cudaMemcpyDeviceToHost);
+//		//cudaMemcpy(pos_host, pos_dev, numB * sizeof(float2), cudaMemcpyDeviceToHost);
+//		//printf("guy1-x: %f, guy1-y: %f | ", pos_host[0].x, pos_host[0].y);
+//		//printf("guy2-x: %f, guy2-y: %f\n", pos_host[1].x, pos_host[1].y);
+//	}
+//
+//    
+//   cudaFree(pos_dev);
+//   cudaFree(vel_dev);
+//   cudaFree(acc_dev);
+//   cudaFree(sep_dev);
+//   cudaFree(align_dev);
+//   cudaFree(cohesion_dev);
+//	
+//   free(pos_host);
+//
+//   auto t2 = high_resolution_clock::now();
+//   duration<double, std::milli> ms_double = t2 - t1;
+//   printf("%f", ms_double);
+//
+//   return 0;
+//}
+__host__
+void testing_cuda()
+{
+	printf("testinf from cuda");
+}
 
 __host__
-int main(int argc, char* argv[]) 
+int setup_flock_cuda(int numB)
 {
-	using std::chrono::high_resolution_clock;
-    using std::chrono::duration_cast;
-    using std::chrono::duration;
-    using std::chrono::milliseconds;
-
-    auto t1 = high_resolution_clock::now();
-
-	int numB = std::stoi(argv[1]);
-	int iterations = std::stoi(argv[2]);
 	
+
+	/*int numB = std::stoi(argv[1]);
+	int iterations = std::stoi(argv[2]);*/
+
+
 	dim3 fullBlocksPerGrid((int)ceil(float(numB) / float(BlockSize)));
 
-  	startCuda(numB);
+	startCuda(numB);
 
 	//printf("\nRunning Simulation with %d boids and %d iterations\n", numB, iterations);
-	for (int i = 0; i < iterations; i++) {
-
-		calc_average_forw_and_pos_device<< <fullBlocksPerGrid, BlockSize, numB >> > (numB, vel_dev, averageForward, pos_dev, averagePos, pos_tmp_dev_x, pos_tmp_dev_y, vel_tmp_dev_x, vel_tmp_dev_y);
-
-		update<<<fullBlocksPerGrid, BlockSize>>>(numB, averagePos, averageForward, pos_dev, vel_dev, acc_dev, sep_dev, align_dev, cohesion_dev);
-		updatePos<<<fullBlocksPerGrid, BlockSize>>>(numB, vel_dev, pos_dev);
-		//for debugging will remove
-		//cudaMemcpy(vel_host, vel_dev, numB * sizeof(float2), cudaMemcpyDeviceToHost);
-		//cudaMemcpy(pos_host, pos_dev, numB * sizeof(float2), cudaMemcpyDeviceToHost);
-		//printf("guy1-x: %f, guy1-y: %f | ", pos_host[0].x, pos_host[0].y);
-		//printf("guy2-x: %f, guy2-y: %f\n", pos_host[1].x, pos_host[1].y);
-	}
-
-    
-   cudaFree(pos_dev);
-   cudaFree(vel_dev);
-   cudaFree(acc_dev);
-   cudaFree(sep_dev);
-   cudaFree(align_dev);
-   cudaFree(cohesion_dev);
 	
-   free(pos_host);
 
-   auto t2 = high_resolution_clock::now();
-   duration<double, std::milli> ms_double = t2 - t1;
-   printf("%f", ms_double);
 
-   return 0;
+	
+
+	return 0;
 }
+
+__host__
+void update_flock_cuda(int numB, float2* vel_host, float2* pos_host)
+{
+	dim3 fullBlocksPerGrid((int)ceil(float(numB) / float(BlockSize)));
+
+	cudaMemcpy(pos_tmp_dev_x, 0, sizeof(float), cudaMemcpyHostToDevice);
+	cudaMemcpy(pos_tmp_dev_y, 0, sizeof(float), cudaMemcpyHostToDevice);
+	cudaMemcpy(vel_tmp_dev_x, 0, sizeof(float), cudaMemcpyHostToDevice);
+	cudaMemcpy(vel_tmp_dev_y, 0, sizeof(float), cudaMemcpyHostToDevice);
+	calc_average_forw_and_pos_device << <fullBlocksPerGrid, BlockSize, numB >> > (numB, vel_dev, averageForward, pos_dev, averagePos, pos_tmp_dev_x, pos_tmp_dev_y, vel_tmp_dev_x, vel_tmp_dev_y);
+
+	update << <fullBlocksPerGrid, BlockSize >> > (numB, averagePos, averageForward, pos_dev, vel_dev, acc_dev, sep_dev, align_dev, cohesion_dev);
+	updatePos << <fullBlocksPerGrid, BlockSize >> > (numB, vel_dev, pos_dev);
+
+	cudaMemcpy(vel_host, vel_dev, numB * sizeof(float2), cudaMemcpyDeviceToHost);
+	cudaMemcpy(pos_host, pos_dev, numB * sizeof(float2), cudaMemcpyDeviceToHost);
+
+	
+}
+
+__host__
+void free_flock_cuda()
+{
+	cudaFree(pos_dev);
+	cudaFree(vel_dev);
+	cudaFree(acc_dev);
+	cudaFree(sep_dev);
+	cudaFree(align_dev);
+	cudaFree(cohesion_dev);
+
+	free(pos_host);
+
+	
+}
+

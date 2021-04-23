@@ -77,6 +77,7 @@
     </CudaCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="cudaSource\main.cpp" />
     <ClCompile Include="source\boid.cpp" />
     <ClCompile Include="source\flock.cpp" />
     <ClCompile Include="source\flock_win.cpp" />

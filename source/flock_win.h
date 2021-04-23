@@ -27,6 +27,7 @@ osg::ref_ptr<osg::Group> root;
 std::vector<osg::ref_ptr<osg::MatrixTransform>> positions;
 public:
     flock_win(Flock* flock);
+    void update_cuda(Flock* flock);
     void update(std::vector<Boid*> boids);
     
 };

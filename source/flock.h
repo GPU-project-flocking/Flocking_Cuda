@@ -2,14 +2,24 @@
 #include <random>
 #include <vector>
 #include "boid.h"
+#include <cublas.h>
+#include "../cudaSource/flock_better.cuh"
+
+
+
 class Flock
 {
+private:
 public:
     Flock(int numBoids);
     ~Flock();
 
-    
-    
+    int num_boids;
+    float2* position_cuda;
+    float2* velocity_cuda;
+    void update_cuda(double delta_time);
+    void setup_cuda(int num_boids);
+    void free_cuda();
 
 
     glm::float32 AlignmentStrength;
@@ -30,5 +40,7 @@ public:
     glm::vec2 calc_separation_accel(Boid* boid);
 
     void update(double delta_time);
+
+    
 };
 

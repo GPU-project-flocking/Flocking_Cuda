@@ -1,9 +1,9 @@
 cmake_minimum_required (VERSION 3.18)
 
-#set(VCPKG_TARGET_TRIPLET x64-windows)
-#set(DCMAKE_TOOLCHAIN_FILE C:/programs/vcpkg/vcpkg/scripts/buildsystems/vcpkg.cmake)
+set(VCPKG_TARGET_TRIPLET x64-windows)
+set(DCMAKE_TOOLCHAIN_FILE C:/programs/vcpkg/vcpkg/scripts/buildsystems/vcpkg.cmake)
 
-project (Flocking_Cuda CXX  CUDA)
+project (Flocking_Cuda LANGUAGES CXX  CUDA)
 
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 set(CMAKE_CXX_STANDARD 11)
@@ -40,13 +40,33 @@ set(SOURCES "${SRC_DIR}/main.cpp"
 
 
 
-add_executable(flocking_better cudaSource/flock_better.cu)
+add_executable(flocking_better cudaSource/flock_better.cu cudaSource/flock_better.cuh)
 add_executable(flocking cudaSource/flock.cu)
+
+
+
+
+
+
 
 
 add_executable (${PROJECT_NAME} ${SOURCES})
 target_include_directories(${PROJECT_NAME} PRIVATE "${SRC_DIR}")
 set_target_properties(${PROJECT_NAME} PROPERTIES LINKER_LANGUAGE CXX)
+
+add_library(cuda_kernels STATIC cudaSource/flock_better.cu cudaSource/flock_better.cuh)
+set_property(TARGET cuda_kernels 
+             PROPERTY CUDA_SEPARABLE_COMPILATION ON)
+
+set_target_properties(cuda_kernels PROPERTIES CUDA_RESOLVE_DEVICE_SYMBOLS ON)
+
+
+target_link_libraries(${PROJECT_NAME} PRIVATE cuda_kernels)
+
+
+
+
+
 
 # find_package(glm CONFIG REQUIRED)
 # target_link_libraries(${PROJECT_NAME} glm)

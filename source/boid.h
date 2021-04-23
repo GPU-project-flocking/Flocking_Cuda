@@ -19,6 +19,8 @@ public:
     Boid();
     ~Boid();
 
+    
+
     glm::vec2 position;
     glm::vec2 velocity;
     double speed;

@@ -70,7 +70,7 @@ flock_win::flock_win(Flock* flock)
     positioned.get()->addChild(geode);
 
 	
-    
+    flock->setup_cuda(flock->Boids.size());
 
     for (int i = 0; i < flock->Boids.size(); i++)
     {
@@ -126,8 +126,9 @@ flock_win::flock_win(Flock* flock)
             boid->move(elapsed.count() / 1000);
         }
 
-        update(flock->Boids);
-        
+        //update(flock->Boids);
+        update_cuda(flock);
+
         win->frame();
 
         Sleep(5);
@@ -140,29 +141,61 @@ void flock_win::update(std::vector<Boid*> boids)
     {
         Boid* temp = boids[i];
 
-        
 
-        osg::Matrix mTrans = osg::Matrix::translate(temp->position.x, 300 , temp->position.y);
+
+        osg::Matrix mTrans = osg::Matrix::translate(temp->position.x, 300, temp->position.y);
 
         osg::Vec2 tempy(temp->velocity.x, temp->velocity.y);
         tempy.normalize();
-        
-        double angle = std::acos(tempy * osg::Vec2(0, 1))  * 180 / 3.14159265359;
 
-    	if(tempy.x() <0)
-    	{
+        double angle = std::acos(tempy * osg::Vec2(0, 1)) * 180 / 3.14159265359;
+
+        if (tempy.x() < 0)
+        {
             angle = (180 - angle) + 180;
-    	}
+        }
 
         osg::Matrix mRot = osg::Matrix::rotate(osg::DegreesToRadians(double(angle)), osg::Y_AXIS);
 
         osg::Matrix m = mRot * mTrans;
         positions[i].get()->setMatrix(m);
-        
-        
+
+
 
 
     }
-    
 }
+
+void flock_win::update_cuda(Flock* flock)
+{
+    for (int i = 0; i < flock->num_boids; i++)
+    {
+        
+
+        
+
+        osg::Matrix mTrans = osg::Matrix::translate(flock->position_cuda->x, 300, flock->position_cuda->y);
+
+        osg::Vec2 tempy(flock->velocity_cuda->x, flock->velocity_cuda->y);
+        tempy.normalize();
+
+        double angle = std::acos(tempy * osg::Vec2(0, 1)) * 180 / 3.14159265359;
+
+        if (tempy.x() < 0)
+        {
+            angle = (180 - angle) + 180;
+        }
+
+        osg::Matrix mRot = osg::Matrix::rotate(osg::DegreesToRadians(double(angle)), osg::Y_AXIS);
+
+        osg::Matrix m = mRot * mTrans;
+        positions[i].get()->setMatrix(m);
+
+
+
+
+    }
+}
+    
+
 

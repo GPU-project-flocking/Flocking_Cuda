@@ -142,3 +142,21 @@ void Flock::update(double delta_time) {
 	}
 
 }
+
+
+void Flock::update_cuda(double delta_time)
+{
+	update_flock_cuda(this->num_boids, this->velocity_cuda, this->position_cuda);
+
+}
+
+void Flock::setup_cuda(int num_boids)
+{
+	setup_flock_cuda(num_boids);
+	this->num_boids = num_boids;
+}
+
+void Flock::free_cuda()
+{
+	free_flock_cuda();
+}
