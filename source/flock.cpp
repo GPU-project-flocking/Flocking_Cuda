@@ -153,6 +153,9 @@ void Flock::update_cuda(double delta_time)
 void Flock::setup_cuda(int num_boids)
 {
 	setup_flock_cuda(num_boids);
+
+	this->position_cuda = (float2*)malloc(num_boids * sizeof(float2));
+	this->velocity_cuda = (float2*)malloc(num_boids * sizeof(float2));
 	this->num_boids = num_boids;
 }
 

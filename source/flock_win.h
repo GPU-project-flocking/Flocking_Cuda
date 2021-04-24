@@ -16,6 +16,8 @@
 #include "flock.h"
 #include <vector>
 
+// I primarily used this source https://medium.com/@ptkinvent/openscenegraph-for-algorithms-development-e4b0eb390e71
+
 class flock_win
 {
 

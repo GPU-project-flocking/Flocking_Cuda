@@ -2,7 +2,7 @@
 #include <random>
 #include <vector>
 #include "boid.h"
-#include <cublas.h>
+#include <vector_types.h>
 #include "../cudaSource/flock_better.cuh"
 
 

@@ -10,11 +10,9 @@ flock_win::flock_win(Flock* flock)
 {
     root = new osg::Group;
 
-   
 
     osg::ref_ptr<osg::Geometry> myTriangleGeometry = new osg::Geometry;
 
-    // Define the triangle's 3 vertices
     osg::ref_ptr<osg::Vec3Array> vertices = new osg::Vec3Array;
 
     vertices->push_back(osg::Vec3(0, 0, 0));
@@ -47,22 +45,17 @@ flock_win::flock_win(Flock* flock)
     vertices->push_back(osg::Vec3(0, 60, 0));
     myTriangleGeometry->setVertexArray(vertices);
 
-    // You can give each vertex its own color, but let's just make it green for now
     osg::ref_ptr<osg::Vec4Array> colors = new osg::Vec4Array;
     colors->push_back(osg::Vec4(0, 1.0, 0, 1.0)); // RGBA for green
     myTriangleGeometry->setColorArray(colors);
     myTriangleGeometry->setColorBinding(osg::Geometry::BIND_OVERALL);
 
-    // Turn off lighting
     myTriangleGeometry->getOrCreateStateSet()->setMode(GL_LIGHTING, osg::StateAttribute::OFF);
 
-    // Turn on blending
     myTriangleGeometry->getOrCreateStateSet()->setMode(GL_BLEND, osg::StateAttribute::ON);
 
-    // Define the geometry type as 'triangles'
     myTriangleGeometry->addPrimitiveSet(new osg::DrawArrays(osg::PrimitiveSet::TRIANGLES, 0, vertices->size()));
 
-    // Finally, let's add our triangle to a geode
     osg::ref_ptr<osg::Geode> geode = new osg::Geode;
     geode->addDrawable(myTriangleGeometry);
 
@@ -72,6 +65,7 @@ flock_win::flock_win(Flock* flock)
 	
     flock->setup_cuda(flock->Boids.size());
 
+    // create new meshes for each boid 
     for (int i = 0; i < flock->Boids.size(); i++)
     {
         osg::ref_ptr<osg::MatrixTransform> positioned = new osg::MatrixTransform;
@@ -91,12 +85,9 @@ flock_win::flock_win(Flock* flock)
     }
     
     
-    //root.get()->addChild(positioned);
+   
 
-
-    //root.get()->addChild(positioned);
-
-
+    //set up window + camera
     win = new osgViewer::Viewer;
     win->setSceneData(root);
     win->setUpViewInWindow(10,35,1000,900,0);
@@ -108,23 +99,25 @@ flock_win::flock_win(Flock* flock)
     int counter = 0;
     auto now = std::chrono::high_resolution_clock::now();
 
-
+    //repeat until finished
     while(!win->done())
     {
+        //random counter that does nothing
         counter++;
       
-        
+        //get elapsed time
         auto later = std::chrono::high_resolution_clock::now();
         std::chrono::duration<double> elapsed = later - now;
         now = std::chrono::high_resolution_clock::now();
 
-        flock->update(elapsed.count()/1000);
+        //flock->update(elapsed.count()/1000);
+        flock->update_cuda(elapsed.count() / 1000);
     	
         std::cout << elapsed.count() << std::endl;
 
-        for (Boid* boid : flock->Boids) {
+        /*for (Boid* boid : flock->Boids) {
             boid->move(elapsed.count() / 1000);
-        }
+        }*/
 
         //update(flock->Boids);
         update_cuda(flock);
@@ -133,8 +126,11 @@ flock_win::flock_win(Flock* flock)
 
         Sleep(5);
     }
+
+    flock->free_cuda();
 }
 
+//update visual boids based off of flock boids position and velocity
 void flock_win::update(std::vector<Boid*> boids)
 {
     for (int i = 0; i < boids.size(); i++)
@@ -166,6 +162,7 @@ void flock_win::update(std::vector<Boid*> boids)
     }
 }
 
+//update for cuda
 void flock_win::update_cuda(Flock* flock)
 {
     for (int i = 0; i < flock->num_boids; i++)
@@ -174,9 +171,9 @@ void flock_win::update_cuda(Flock* flock)
 
         
 
-        osg::Matrix mTrans = osg::Matrix::translate(flock->position_cuda->x, 300, flock->position_cuda->y);
+        osg::Matrix mTrans = osg::Matrix::translate(flock->position_cuda[i].x, 300, flock->position_cuda[i].y);
 
-        osg::Vec2 tempy(flock->velocity_cuda->x, flock->velocity_cuda->y);
+        osg::Vec2 tempy(flock->velocity_cuda[i].x, flock->velocity_cuda[i].y);
         tempy.normalize();
 
         double angle = std::acos(tempy * osg::Vec2(0, 1)) * 180 / 3.14159265359;
