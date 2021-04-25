@@ -1,10 +1,10 @@
 //These includes are for running on a personal computer
-#include "cuda_runtime.h"
-#include "device_launch_parameters.h"
-#include <cuda_runtime_api.h>
-#include <stdio.h>
-#include <device_functions.h>
-#include <cuda.h>
+// #include "cuda_runtime.h"
+// #include "device_launch_parameters.h"
+// #include <cuda_runtime_api.h>
+// #include <stdio.h>
+// #include <device_functions.h>
+// #include <cuda.h>
 
 #include "flock_better.cuh"
 #include <iostream>
@@ -109,9 +109,9 @@ __device__ float2 normalize(float2 vector) {
 
 
 // used this github as inspiration for this summation reduction kernel:  https://github.com/mark-poscablo/gpu-sum-reduction/blob/master/sum_reduction/reduce.cu#L196
-__global__ void calc_average_forw_and_pos_device(int numBoids, float2* vel_arr_dev, float2* average_forward, float2* pos_arr_dev,  float2* average_pos,float* pos_tmp_dev_x, float* pos_tmp_dev_y, float* vel_tmp_dev_x, float* vel_tmp_dev_y) {
+__global__ void calc_average_forw_and_pos_device(int numBoids, float2* vel_arr_dev, float2* average_forward, float2* pos_arr_dev,  float2* average_pos,float* pos_tmp_dev_x, float* pos_tmp_dev_y, float* vel_tmp_dev_x, float* vel_tmp_dev_y) 
+{
 
-	//initialize shared memory
 	__shared__ float s_sum_pos_x[BlockSize];
 	__shared__ float s_sum_pos_y[BlockSize];
 	__shared__ float s_sum_vel_x[BlockSize];
@@ -119,27 +119,8 @@ __global__ void calc_average_forw_and_pos_device(int numBoids, float2* vel_arr_d
 	
 	unsigned int i = blockIdx.x * (blockDim.x * 2) + threadIdx.x;
 	unsigned int thr_idx = threadIdx.x;
-	
-	//each thread assigns sets a value to zero.
-	/*s_sum_vel_x[thr_idx] = 0;
-	s_sum_vel_y[thr_idx] = 0;
-	s_sum_pos_x[thr_idx] = 0;
-	s_sum_pos_y[thr_idx] = 0;*/
 
-	//if (threadIdx.x == 0 && blockIdx.x == 0)
-	//{
-	//	printf("before avg pos device is: %d \n", pos_dev->x);
-
-	//	vel_dev->x = 0;
-	//	vel_dev->y = 0;
-	//	pos_dev->x = 0;
-	//	pos_dev->y = 0;
-	//	printf("after avg pos device is: %d \n", pos_dev->x);
-
-	//}
-
-	
-
+	//setting shared memory
 	if(i < numBoids/2)
 	{
 		s_sum_vel_x[thr_idx] = vel_arr_dev[i].x + vel_arr_dev[i + blockDim.x].x;
@@ -148,13 +129,13 @@ __global__ void calc_average_forw_and_pos_device(int numBoids, float2* vel_arr_d
 		
 		s_sum_pos_x[thr_idx] = pos_arr_dev[i].x + pos_arr_dev[i + blockDim.x].x;
 		s_sum_pos_y[thr_idx] = pos_arr_dev[i].y + pos_arr_dev[i + blockDim.x].y;
-		//printf("initial set: %f \n", s_sum_pos_y[thr_idx]);
 	}
 	
 	__syncthreads();
 	
-
-	for (int x = blockDim.x; x > 0; x >>= 1) {
+	//summation reduction loop. This for loop will add all of the elements in the array.
+	for (int x = blockDim.x; x > 0; x >>= 1)
+	{
 	
 		
 	
@@ -170,7 +151,7 @@ __global__ void calc_average_forw_and_pos_device(int numBoids, float2* vel_arr_d
 		__syncthreads();
 	}
 	
-
+	//atomic add to store -> sum / numboids + average = average
 	 if (thr_idx == 0)
 	 {
 		 //printf("final set: %f \n", s_sum_pos_y[0]);
@@ -182,25 +163,8 @@ __global__ void calc_average_forw_and_pos_device(int numBoids, float2* vel_arr_d
 		 
 		 
 	 }
-
-
-
-	//cudaDeviceSynchronize();
-
-	 if (threadIdx.x == 0 && blockIdx.x == 0)
-	 {
-	 	//vel_dev->x = *vel_tmp_dev_x / numBoids;
-	 	//vel_dev->y = *vel_tmp_dev_y / numBoids;
-	 	//pos_dev->x = *pos_tmp_dev_x / numBoids;
-	 	//pos_dev->y = *pos_tmp_dev_y / numBoids;
-		
-		 
-
-
-		//printf("test");
-	 	//printf("avg pos device is: %d \n", pos_dev->x);
-	 }
-	// //printf("test-outside \n");
+	
+	 
 }
 
 
@@ -474,7 +438,9 @@ int main(int argc, char* argv[])
  
  
  
- 
+ //-----------------------------------------------------------------------
+ // Below is for visual debugging purposes
+ // ----------------------------------------------------------------
  
  
  

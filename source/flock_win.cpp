@@ -11,6 +11,8 @@ flock_win::flock_win(Flock* flock)
     root = new osg::Group;
 
 
+    //Hard coded the 3d boid model
+    
     osg::ref_ptr<osg::Geometry> myTriangleGeometry = new osg::Geometry;
 
     osg::ref_ptr<osg::Vec3Array> vertices = new osg::Vec3Array;
@@ -46,7 +48,7 @@ flock_win::flock_win(Flock* flock)
     myTriangleGeometry->setVertexArray(vertices);
 
     osg::ref_ptr<osg::Vec4Array> colors = new osg::Vec4Array;
-    colors->push_back(osg::Vec4(0, 1.0, 0, 1.0)); // RGBA for green
+    colors->push_back(osg::Vec4(0, 1.0, 0, 1.0));
     myTriangleGeometry->setColorArray(colors);
     myTriangleGeometry->setColorBinding(osg::Geometry::BIND_OVERALL);
 

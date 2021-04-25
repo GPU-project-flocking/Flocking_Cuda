@@ -3,7 +3,7 @@
 #include <iostream>
 #include <random>
 
-
+//init flock
 Flock::Flock(int numBoids) {
 	for (int i = 0; i < numBoids; i++) {
 		spawn_boid();
@@ -24,6 +24,7 @@ Flock::~Flock() {
 		delete Boids[i];
 	}
 }
+
 
 void Flock::spawn_boid()
 {
@@ -143,13 +144,13 @@ void Flock::update(double delta_time) {
 
 }
 
-
+//for debugging cuda flocking
 void Flock::update_cuda(double delta_time)
 {
 	update_flock_cuda(this->num_boids, this->velocity_cuda, this->position_cuda);
 
 }
-
+//init cuda
 void Flock::setup_cuda(int num_boids)
 {
 	setup_flock_cuda(num_boids);
@@ -158,7 +159,7 @@ void Flock::setup_cuda(int num_boids)
 	this->velocity_cuda = (float2*)malloc(num_boids * sizeof(float2));
 	this->num_boids = num_boids;
 }
-
+//free cuda
 void Flock::free_cuda()
 {
 	free_flock_cuda();
