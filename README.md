@@ -11,18 +11,22 @@ To compile and run the code youreself see the compiling heading.
 
 ## compiling cuda code by itself
 Run
+'cd cudaSource'
 'nvcc -std=c++11 flock.cu -o flock'
 for the naive cuda version
 or run
+'cd cudaSource'
 'nvcc -std=c++11 flock_better.cu -o flock'
 './flock'
 for the version using reduction summation
 
 ## shellscript
 run
+'cd cudaSource'
 './testNaiveCuda.sh'
 for the naive version
 or 
+'cd cudaSource'
 './testSmartCuda.sh'
 for the smart version
 
